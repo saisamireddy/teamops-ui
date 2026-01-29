@@ -39,22 +39,30 @@ export class TaskListComponent implements OnInit, OnDestroy {
   }
 
   handleEvent(event: any) {
-    const task = event.task;
+  if (event.entity !== 'task') return;
 
-    switch (event.action) {
-      case 'CREATED':
+  const task = event.data;
+
+  switch (event.action) {
+    case 'CREATED':
+    case 'RESTORED':
+      if (!this.tasks.find(t => t.id === task.id)) {
         this.tasks.push(task);
-        break;
-      case 'UPDATED':
-        this.tasks = this.tasks.map(t =>
-          t.id === task.id ? task : t
-        );
-        break;
-      case 'DELETED':
-        this.tasks = this.tasks.filter(t => t.id !== task.id);
-        break;
-    }
+      }
+      break;
+
+    case 'UPDATED':
+      this.tasks = this.tasks.map(t =>
+        t.id === task.id ? task : t
+      );
+      break;
+
+    case 'DELETED':
+      this.tasks = this.tasks.filter(t => t.id !== task.id);
+      break;
   }
+}
+
 
   ngOnDestroy() {
     this.routeSub.unsubscribe();
