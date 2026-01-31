@@ -12,6 +12,9 @@ import { ProjectContextService } from '../../../core/services/project-context.se
 export class TaskListComponent implements OnInit, OnDestroy {
   tasks: any[] = [];
 
+  //  Idempotency guard: taskId → last updated_at
+  private taskVersions = new Map<number, string>();
+
   private routeSub!: Subscription;
   private wsSub!: Subscription;
 
@@ -22,11 +25,12 @@ export class TaskListComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    
+   
     this.wsSub = this.ws.events.subscribe(event => {
       this.handleEvent(event);
     });
 
+    
     this.routeSub = this.route.paramMap.subscribe(params => {
       const projectId = Number(params.get('projectId'));
       if (projectId) {
@@ -41,6 +45,15 @@ export class TaskListComponent implements OnInit, OnDestroy {
     }
 
     const task = event.data;
+
+    //  IDEMPOTENCY CHECK
+    const lastVersion = this.taskVersions.get(task.id);
+    if (lastVersion && lastVersion >= task.updated_at) {
+      return; 
+    }
+
+    // Record newest version
+    this.taskVersions.set(task.id, task.updated_at);
 
     switch (event.action) {
       case 'CREATED':
@@ -64,6 +77,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
     this.wsSub.unsubscribe();
     this.routeSub.unsubscribe();
 
+    
     this.projectContext.clearProject();
   }
 }
