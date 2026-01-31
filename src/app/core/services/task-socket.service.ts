@@ -1,47 +1,53 @@
-import { Injectable } from '@angular/core';
-import { Subject } from 'rxjs';
+import { Injectable, OnDestroy } from '@angular/core';
+import { Subject, Subscription } from 'rxjs';
 import { AuthService } from './auth.service';
-@Injectable({
-  providedIn: 'root',
-})
+import { ProjectContextService } from './project-context.service';
 
-export class TaskSocketService {
+@Injectable({ providedIn: 'root' })
+export class TaskSocketService implements OnDestroy {
   private socket: WebSocket | null = null;
   private events$ = new Subject<any>();
 
   private reconnectAttempts = 0;
   private readonly MAX_RETRIES = 5;
-  private readonly BASE_DELAY = 1000; // 1s
-  private activeProjectId: number | null = null;
+  private readonly BASE_DELAY = 1000;
+
+  private projectSub: Subscription;
+  private currentProjectId: number | null = null;
   private manuallyClosed = false;
 
-  constructor(private auth: AuthService) {}
-
-  connect(projectId: number) {
-    if (!this.auth.isAuthenticated()) return;
-
-    // Prevent duplicate connections
-    if (
-    this.socket &&
-    this.socket.readyState === WebSocket.OPEN &&
-    this.activeProjectId === projectId
+  constructor(
+    private auth: AuthService,
+    private projectContext: ProjectContextService
   ) {
-    return;
+    
+    this.projectSub = this.projectContext.getProject().subscribe(projectId => {
+      if (!projectId) {
+        this.close(true);
+        return;
+      }
+
+      if (projectId === this.currentProjectId) return;
+
+      this.currentProjectId = projectId;
+      this.open(projectId);
+    });
   }
 
-    this.disconnect(false);
+  private open(projectId: number) {
+    if (!this.auth.isAuthenticated()) return;
 
-    this.activeProjectId = projectId;
-    this.manuallyClosed = false;
+    this.close(false);
 
     const token = this.auth.getToken();
     if (!token) return;
+
+    this.manuallyClosed = false;
 
     const url = `ws://127.0.0.1:8000/ws/projects/${projectId}/?token=${token}`;
     this.socket = new WebSocket(url);
 
     this.socket.onopen = () => {
-      console.log('[WS] connected');
       this.reconnectAttempts = 0;
     };
 
@@ -50,20 +56,16 @@ export class TaskSocketService {
     };
 
     this.socket.onclose = () => {
-      console.warn('[WS] disconnected');
-
       if (this.manuallyClosed) return;
-   if (this.reconnectAttempts >= this.MAX_RETRIES) {
-    console.warn('[WS] max reconnect attempts reached');
-    return;
-  }
-      const delay = this.BASE_DELAY * Math.pow(2, this.reconnectAttempts);
-      console.log(`[WS] reconnecting in ${delay}ms`);
-      this.reconnectAttempts++;
 
+      if (this.reconnectAttempts >= this.MAX_RETRIES) {
+        return;
+      }
+
+      const delay = this.BASE_DELAY * Math.pow(2, this.reconnectAttempts++);
       setTimeout(() => {
-        if (this.activeProjectId) {
-          this.connect(this.activeProjectId);
+        if (this.currentProjectId) {
+          this.open(this.currentProjectId);
         }
       }, delay);
     };
@@ -73,20 +75,29 @@ export class TaskSocketService {
     };
   }
 
-disconnect(manual = true) {
-  this.manuallyClosed = manual;
+  
+  private close(manual: boolean) {
+    this.manuallyClosed = manual;
 
-  this.socket?.close();
-  this.socket = null;
+    if (this.socket) {
+      
+      this.socket.onclose = null;
+      this.socket.close();
+    }
 
-  //  Only clear project intent on manual disconnect
-  if (manual) {
-    this.activeProjectId = null;
+    this.socket = null;
+
+    if (manual) {
+      this.currentProjectId = null;
+    }
   }
-}
 
   get events() {
     return this.events$.asObservable();
   }
 
+  ngOnDestroy() {
+    this.projectSub.unsubscribe();
+    this.close(true);
+  }
 }
