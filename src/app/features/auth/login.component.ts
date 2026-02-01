@@ -30,7 +30,10 @@ login() {
   this.auth.login(this.username, this.password).subscribe({
     next: () => {
       this.loading = false;
-      this.router.navigate(['/projects/1/tasks']);
+      const saved = localStorage.getItem('last_project_id');
+      this.router.navigate(
+  saved ? ['/projects', saved, 'tasks'] : ['/projects', 1, 'tasks']
+);
     },
     error: (err) => {
       this.loading = false;

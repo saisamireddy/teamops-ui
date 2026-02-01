@@ -1,0 +1,13 @@
+<select
+  [ngModel]="activeProjectId"
+  (ngModelChange)="switchProject($event)"
+>
+  <option [ngValue]="null" disabled>Select project</option>
+
+  <option
+    *ngFor="let project of (projects$ | async)"
+    [ngValue]="project.id"
+  >
+    {{ project.name }}
+  </option>
+</select>

@@ -14,8 +14,17 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
   },
   {
-    path: '',
-    redirectTo: 'projects/1/tasks', // TEMP default
-    pathMatch: 'full'
+  path: '',
+  redirectTo: (() => {
+    const saved = localStorage.getItem('last_project_id');
+    return saved
+      ? `projects/${saved}/tasks`
+      : 'login';
+  })(),
+  pathMatch: 'full'
+},
+  {
+    path: '**',
+    redirectTo: 'login'
   }
 ];
