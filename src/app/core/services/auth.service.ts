@@ -27,6 +27,7 @@ export class AuthService {
 
   logout(): void {
     localStorage.removeItem(this.TOKEN_KEY);
+    localStorage.removeItem('last_project_id');
     this.authenticated$.next(false);
   }
 

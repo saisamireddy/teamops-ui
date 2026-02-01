@@ -43,9 +43,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   switchProject(projectId: number) {
-    if (!projectId || projectId === this.activeProjectId) return;
-    this.router.navigate(['/projects', projectId, 'tasks']);
-  }
+  if (!projectId || projectId === this.activeProjectId) return;
+
+  localStorage.setItem('last_project_id', String(projectId));
+
+  this.router.navigate(['/projects', projectId, 'tasks']);
+}
+
 
   ngOnDestroy() {
     this.navSub.unsubscribe();
