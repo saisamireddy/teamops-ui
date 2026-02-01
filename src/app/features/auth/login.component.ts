@@ -30,7 +30,7 @@ login() {
   this.auth.login(this.username, this.password).subscribe({
     next: () => {
       this.loading = false;
-      this.router.navigate(['/projects/1/tasks']);
+      this.router.navigate(['/projects', 1, 'tasks']);
     },
     error: (err) => {
       this.loading = false;

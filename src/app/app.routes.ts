@@ -15,7 +15,11 @@ export const routes: Routes = [
   },
   {
     path: '',
-    redirectTo: 'projects/1/tasks', // TEMP default
+    redirectTo: 'login',
     pathMatch: 'full'
+  },
+  {
+    path: '**',
+    redirectTo: 'login'
   }
 ];
