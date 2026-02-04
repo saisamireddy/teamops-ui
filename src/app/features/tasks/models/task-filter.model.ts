@@ -1,5 +1,5 @@
 export interface TaskFilter {
   status?: string;
-  assignee?: string | null;
+  assignee?: number | null;
   priority?: string;
 }

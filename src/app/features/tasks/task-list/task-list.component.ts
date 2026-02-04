@@ -30,6 +30,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
   private wsSub!: Subscription;
   private currentProjectId: number | null = null;
   private hydrated = false;
+assignees: any;
 
   constructor(
     private route: ActivatedRoute,
@@ -158,22 +159,22 @@ getAvailableAssignees(): Assignee[] {
 }
 
 
-onAssigneeChange(assigneeId: number | null) {
-  this.filters.assignee = assigneeId ?? undefined;
-  this.applyFilters();
+onAssigneeChange(value: string) {
+  this.filters.assignee = value ? Number(value) : undefined;
   this.saveFilters();
+  this.applyFilters();
 }
 
-  onStatusChange(status: string) {
-  this.filters.status = status || undefined;
+onStatusChange(value: string) {
+  this.filters.status = value || undefined;
+  this.saveFilters();
   this.applyFilters();
-    this.saveFilters();
 }
 
-onPriorityChange(priority: string) {
-  this.filters.priority = priority || undefined;
+onPriorityChange(value: string) {
+  this.filters.priority = value || undefined;
+  this.saveFilters();
   this.applyFilters();
-    this.saveFilters();
 }
 
 private saveFilters() {
@@ -204,6 +205,21 @@ private loadFilters(projectId: number) {
     this.applyFilters();
   }
   this.cdr.markForCheck();
+}
+
+clearFilters() {
+  if (!this.currentProjectId) return;
+
+  
+  delete this.filters.status;
+  delete this.filters.priority;
+  delete this.filters.assignee;
+
+  // Clear persisted filters
+  localStorage.removeItem(`task-filters:${this.currentProjectId}`);
+
+  // Recompute visible tasks
+  this.applyFilters();
 }
 
 
