@@ -1,1 +1,48 @@
-<p>task-list works!</p>
+<!-- src/app/features/tasks/task-list/task-list.component.html -->
+
+<!-- FILTER CONTROLS -->
+<div class="task-filters">
+  <!-- Status Filter -->
+  <select
+    [ngModel]="filters.status"
+    (ngModelChange)="onStatusChange($event)"
+  >
+    <option value="">All Status</option>
+    <option value="TODO">Todo</option>
+    <option value="IN_PROGRESS">In Progress</option>
+    <option value="BLOCKED">Blocked</option>
+    <option value="DONE">Done</option>
+  </select>
+
+  <!-- Priority Filter -->
+  <select
+    [ngModel]="filters.priority"
+    (ngModelChange)="onPriorityChange($event)"
+  >
+    <option value="">All Priority</option>
+    <option value="LOW">Low</option>
+    <option value="MED">Medium</option>
+    <option value="HIGH">High</option>
+    <option value="CRIT">Critical</option>
+  </select>
+</div>
+
+<hr />
+
+<!-- TASK LIST -->
+<div *ngIf="visibleTasks.length === 0">
+  No tasks in this project.
+</div>
+
+<ul>
+  <li *ngFor="let task of visibleTasks">
+    <strong>{{ task.title }}</strong>
+    —
+    {{ task.status }}
+    —
+    {{ task.priority }}
+    <span *ngIf="task.assigned_to">
+      ({{ task.assigned_to }})
+    </span>
+  </li>
+</ul>
