@@ -9,6 +9,7 @@ import { CommonModule } from '@angular/common';
 import { TaskFilter } from '../models/task-filter.model';
 import { FormsModule } from '@angular/forms';
 import { ChangeDetectorRef } from '@angular/core';
+import { Assignee } from '../models/assignee.model';
 
 @Component({
   selector: 'app-task-list',
@@ -131,15 +132,37 @@ private applyFilters() {
     );
   }
 
-  if (this.filters.assignee) {
-    result = result.filter(
-      t => t.assigned_to === this.filters.assignee
-    );
-  }
+  if (this.filters.assignee !== undefined) {
+  result = result.filter(
+    t => t.assigned_to === this.filters.assignee
+  );
+}
 
   this.visibleTasks = result;
 }
 
+
+getAvailableAssignees(): Assignee[] {
+  const map = new Map<number, string>();
+
+  this.tasks.forEach(t => {
+    if (t.assigned_to !== null && t.assigned_username) {
+      map.set(t.assigned_to, t.assigned_username);
+    }
+  });
+
+  return Array.from(map.entries()).map(([id, username]) => ({
+    id,
+    username,
+  }));
+}
+
+
+onAssigneeChange(assigneeId: number | null) {
+  this.filters.assignee = assigneeId ?? undefined;
+  this.applyFilters();
+  this.saveFilters();
+}
 
   onStatusChange(status: string) {
   this.filters.status = status || undefined;

@@ -25,6 +25,20 @@
     <option value="HIGH">High</option>
     <option value="CRIT">Critical</option>
   </select>
+
+<select
+  [ngModel]="filters.assignee"
+  (ngModelChange)="onAssigneeChange($event)"
+>
+  <option [ngValue]="null">All Assignees</option>
+
+  <option
+    *ngFor="let user of getAvailableAssignees()"
+    [ngValue]="user.id"
+  >
+    {{ user.username }}
+  </option>
+</select>
 </div>
 
 <hr />
