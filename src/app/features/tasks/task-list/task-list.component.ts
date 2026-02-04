@@ -9,6 +9,7 @@ import { CommonModule } from '@angular/common';
 import { TaskFilter } from '../models/task-filter.model';
 import { FormsModule } from '@angular/forms';
 import { ChangeDetectorRef } from '@angular/core';
+import { Assignee } from '../models/assignee.model';
 
 @Component({
   selector: 'app-task-list',
@@ -29,6 +30,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
   private wsSub!: Subscription;
   private currentProjectId: number | null = null;
   private hydrated = false;
+assignees: any;
 
   constructor(
     private route: ActivatedRoute,
@@ -131,26 +133,48 @@ private applyFilters() {
     );
   }
 
-  if (this.filters.assignee) {
-    result = result.filter(
-      t => t.assigned_to === this.filters.assignee
-    );
-  }
+  if (this.filters.assignee !== undefined) {
+  result = result.filter(
+    t => t.assigned_to === this.filters.assignee
+  );
+}
 
   this.visibleTasks = result;
 }
 
 
-  onStatusChange(status: string) {
-  this.filters.status = status || undefined;
-  this.applyFilters();
-    this.saveFilters();
+getAvailableAssignees(): Assignee[] {
+  const map = new Map<number, string>();
+
+  this.tasks.forEach(t => {
+    if (t.assigned_to !== null && t.assigned_username) {
+      map.set(t.assigned_to, t.assigned_username);
+    }
+  });
+
+  return Array.from(map.entries()).map(([id, username]) => ({
+    id,
+    username,
+  }));
 }
 
-onPriorityChange(priority: string) {
-  this.filters.priority = priority || undefined;
+
+onAssigneeChange(value: string) {
+  this.filters.assignee = value ? Number(value) : undefined;
+  this.saveFilters();
   this.applyFilters();
-    this.saveFilters();
+}
+
+onStatusChange(value: string) {
+  this.filters.status = value || undefined;
+  this.saveFilters();
+  this.applyFilters();
+}
+
+onPriorityChange(value: string) {
+  this.filters.priority = value || undefined;
+  this.saveFilters();
+  this.applyFilters();
 }
 
 private saveFilters() {
@@ -181,6 +205,21 @@ private loadFilters(projectId: number) {
     this.applyFilters();
   }
   this.cdr.markForCheck();
+}
+
+clearFilters() {
+  if (!this.currentProjectId) return;
+
+  
+  delete this.filters.status;
+  delete this.filters.priority;
+  delete this.filters.assignee;
+
+  // Clear persisted filters
+  localStorage.removeItem(`task-filters:${this.currentProjectId}`);
+
+  // Recompute visible tasks
+  this.applyFilters();
 }
 
 

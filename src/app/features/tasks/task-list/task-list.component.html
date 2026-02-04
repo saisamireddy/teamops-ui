@@ -2,29 +2,43 @@
 
 <!-- FILTER CONTROLS -->
 <div class="task-filters">
-  <!-- Status Filter -->
-  <select
-    [ngModel]="filters.status"
-    (ngModelChange)="onStatusChange($event)"
-  >
-    <option value="">All Status</option>
-    <option value="TODO">Todo</option>
-    <option value="IN_PROGRESS">In Progress</option>
-    <option value="BLOCKED">Blocked</option>
-    <option value="DONE">Done</option>
-  </select>
+<!-- Status Filter -->
+<select
+  [value]="filters.status ?? ''"
+  (change)="onStatusChange($any($event.target).value)"
+>
+  <option value="">All Status</option>
+  <option value="TODO">Todo</option>
+  <option value="IN_PROGRESS">In Progress</option>
+  <option value="BLOCKED">Blocked</option>
+  <option value="DONE">Done</option>
+</select>
 
-  <!-- Priority Filter -->
-  <select
-    [ngModel]="filters.priority"
-    (ngModelChange)="onPriorityChange($event)"
-  >
-    <option value="">All Priority</option>
-    <option value="LOW">Low</option>
-    <option value="MED">Medium</option>
-    <option value="HIGH">High</option>
-    <option value="CRIT">Critical</option>
-  </select>
+<!-- Priority Filter -->
+<select
+  [value]="filters.priority ?? ''"
+  (change)="onPriorityChange($any($event.target).value)"
+>
+  <option value="">All Priority</option>
+  <option value="LOW">Low</option>
+  <option value="MED">Medium</option>
+  <option value="HIGH">High</option>
+  <option value="CRIT">Critical</option>
+</select>
+
+<!-- Assignee Filter -->
+<select
+  [value]="filters.assignee ?? ''"
+  (change)="onAssigneeChange($any($event.target).value)"
+>
+  <option value="">All Assignees</option>
+  <option *ngFor="let u of assignees" [value]="u.id">
+    {{ u.username }}
+  </option>
+</select>
+
+<button type="button" (click)="clearFilters()">Clear Filters</button>
+
 </div>
 
 <hr />
