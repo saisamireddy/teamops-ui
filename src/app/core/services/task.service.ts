@@ -40,6 +40,7 @@ export class TaskService {
    */
   updateTask(taskId: number, payload: Partial<{
     title: string;
+    description: string;
     status: string;
     priority: string;
     assigned_to: number | null;

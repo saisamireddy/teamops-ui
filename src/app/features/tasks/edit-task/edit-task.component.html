@@ -1,0 +1,56 @@
+<div class="modal-backdrop">
+  <div class="modal">
+
+    <h2>Edit Task</h2>
+
+    <div *ngIf="error" class="error">
+      {{ error }}
+    </div>
+
+    <form (ngSubmit)="submit()">
+
+      <input
+        [(ngModel)]="form.title"
+        name="title"
+        placeholder="Title"
+        required
+      />
+
+      <textarea
+        [(ngModel)]="form.description"
+        name="description"
+        placeholder="Description"
+      ></textarea>
+
+      <select [(ngModel)]="form.status" name="status">
+        <option value="TODO">Todo</option>
+        <option value="IN_PROGRESS">In Progress</option>
+        <option value="BLOCKED">Blocked</option>
+        <option value="DONE">Done</option>
+      </select>
+
+      <select [(ngModel)]="form.priority" name="priority">
+        <option value="LOW">Low</option>
+        <option value="MED">Medium</option>
+        <option value="HIGH">High</option>
+        <option value="CRIT">Critical</option>
+      </select>
+
+      <select [(ngModel)]="form.assigned_to" name="assigned_username">
+        <option [ngValue]="null">Unassigned</option>
+        <option *ngFor="let m of members" [ngValue]="m.id">
+          {{ m.username }}
+        </option>
+      </select>
+
+      <button type="submit" [disabled]="loading">
+        Save
+      </button>
+
+      <button type="button" (click)="cancel()">
+        Cancel
+      </button>
+
+    </form>
+  </div>
+</div>

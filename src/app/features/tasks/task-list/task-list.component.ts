@@ -13,11 +13,13 @@ import { Assignee } from '../models/assignee.model';
 import { CreateTaskComponent } from '../create-task/create-task.component';
 import { ProjectService } from '../../../core/services/project.service';
 import { ProjectMember } from '../../../core/models/member.model';
+import { EditTaskComponent } from '../edit-task/edit-task.component';
+
 @Component({
   selector: 'app-task-list',
   standalone: true,
   templateUrl: './task-list.component.html',
-  imports: [CommonModule,FormsModule, CreateTaskComponent]
+  imports: [CommonModule,FormsModule, CreateTaskComponent, EditTaskComponent]
 })
 export class TaskListComponent implements OnInit, OnDestroy {
   tasks: Task[] = [];
@@ -26,6 +28,8 @@ export class TaskListComponent implements OnInit, OnDestroy {
   filters: TaskFilter = {};
   showCreateModal = false;
   projectMembers: ProjectMember[] = [];
+  showEditModal = false;
+  editingTask: Task | null = null;
 
   //  Idempotency guard: taskId → last updated_at
   private taskVersions = new Map<number, string>();
@@ -82,8 +86,7 @@ private loadTasks(projectId: number) {
 }
 
 private loadMembers(projectId: number) {
-  // TEMP: assume ProjectService has this
-  // If not, we add it next step
+  
   this.projectService.getProjectMembers(projectId)
     .subscribe(members => {
       this.projectMembers = members;
@@ -241,6 +244,18 @@ clearFilters() {
   // Recompute visible tasks
   this.applyFilters();
 }
+
+// edit 
+openEditModal(task: Task) {
+  this.editingTask = task;
+  this.showEditModal = true;
+}
+
+closeEditModal() {
+  this.showEditModal = false;
+  this.editingTask = null;
+}
+
 
 
   ngOnDestroy() {
