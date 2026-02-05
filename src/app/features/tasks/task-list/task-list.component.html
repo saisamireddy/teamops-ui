@@ -1,5 +1,11 @@
-<!-- src/app/features/tasks/task-list/task-list.component.html -->
 
+  <button (click)="openCreateModal()">+ New Task</button>
+  <app-create-task
+  *ngIf="showCreateModal"
+  [projectId]="currentProjectId!"
+  [members]="projectMembers"
+  (close)="closeCreateModal()"
+></app-create-task>
 <!-- FILTER CONTROLS -->
 <div class="task-filters">
 <!-- Status Filter -->

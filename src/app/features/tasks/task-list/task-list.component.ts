@@ -10,25 +10,29 @@ import { TaskFilter } from '../models/task-filter.model';
 import { FormsModule } from '@angular/forms';
 import { ChangeDetectorRef } from '@angular/core';
 import { Assignee } from '../models/assignee.model';
-
+import { CreateTaskComponent } from '../create-task/create-task.component';
+import { ProjectService } from '../../../core/services/project.service';
+import { ProjectMember } from '../../../core/models/member.model';
 @Component({
   selector: 'app-task-list',
   standalone: true,
   templateUrl: './task-list.component.html',
-  imports: [CommonModule,FormsModule]
+  imports: [CommonModule,FormsModule, CreateTaskComponent]
 })
 export class TaskListComponent implements OnInit, OnDestroy {
   tasks: Task[] = [];
   visibleTasks: any[] = [];
 
   filters: TaskFilter = {};
+  showCreateModal = false;
+  projectMembers: ProjectMember[] = [];
 
   //  Idempotency guard: taskId → last updated_at
   private taskVersions = new Map<number, string>();
 
   private routeSub!: Subscription;
   private wsSub!: Subscription;
-  private currentProjectId: number | null = null;
+  currentProjectId: number | null = null;
   private hydrated = false;
 assignees: any;
 
@@ -37,6 +41,7 @@ assignees: any;
     private ws: TaskSocketService,
     private projectContext: ProjectContextService,
     private taskService: TaskService,
+    private projectService: ProjectService, 
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -54,7 +59,7 @@ assignees: any;
         this.loadFilters(projectId);
         this.projectContext.setProject(projectId);
         this.loadTasks(projectId);
-      
+        this.loadMembers(projectId);
     });
   }
 
@@ -76,6 +81,21 @@ private loadTasks(projectId: number) {
   });
 }
 
+private loadMembers(projectId: number) {
+  // TEMP: assume ProjectService has this
+  // If not, we add it next step
+  this.projectService.getProjectMembers(projectId)
+    .subscribe(members => {
+      this.projectMembers = members;
+    });
+}
+openCreateModal() {
+  this.showCreateModal = true;
+}
+
+closeCreateModal() {
+  this.showCreateModal = false;
+}
 
   handleEvent(event: any) {
 
