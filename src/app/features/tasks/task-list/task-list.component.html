@@ -61,8 +61,18 @@
     {{ task.status }}
     —
     {{ task.priority }}
-    <span *ngIf="task.assigned_to">
-      ({{ task.assigned_to }})
+    <span *ngIf="task.assigned_username">
+      ({{ task.assigned_username }})
     </span>
+
+  <button (click)="openEditModal(task)">Edit</button>
+
   </li>
 </ul>
+
+<app-edit-task
+  *ngIf="showEditModal && editingTask"
+  [task]="editingTask"
+  [members]="projectMembers"
+  (close)="closeEditModal()"
+></app-edit-task>
