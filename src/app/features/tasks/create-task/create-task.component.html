@@ -1,0 +1,70 @@
+<div class="modal-backdrop">
+  <div class="modal">
+    <h3>New Task</h3>
+
+<form (ngSubmit)="submit()">
+
+  <!-- Title -->
+  <div class="form-group">
+    <label>Title</label>
+    <input
+      type="text"
+      [(ngModel)]="form.title"
+      name="title"
+      required
+    />
+  </div>
+
+  <!-- Description -->
+  <div class="form-group">
+    <label>Description</label>
+    <textarea
+      [(ngModel)]="form.description"
+      name="description"
+      rows="3"
+      required
+    ></textarea>
+  </div>
+
+  <!-- Status -->
+  <select [(ngModel)]="form.status" name="status">
+    <option value="TODO">Todo</option>
+    <option value="IN_PROGRESS">In Progress</option>
+    <option value="BLOCKED">Blocked</option>
+    <option value="DONE">Done</option>
+  </select>
+
+  <!-- Priority -->
+  <select [(ngModel)]="form.priority" name="priority">
+    <option value="LOW">Low</option>
+    <option value="MED">Medium</option>
+    <option value="HIGH">High</option>
+    <option value="CRIT">Critical</option>
+  </select>
+
+  <!-- Assignee -->
+  <select [(ngModel)]="form.assigned_to" name="assigned_to">
+    <option [ngValue]="null">Unassigned</option>
+    <option *ngFor="let m of members" [ngValue]="m.id">
+      {{ m.username }}
+    </option>
+  </select>
+
+  <!-- Error -->
+  <div *ngIf="error" class="error">
+    {{ error }}
+  </div>
+
+  <!-- Actions -->
+  <button type="submit" [disabled]="loading">
+    Create Task
+  </button>
+
+  <button type="button" (click)="cancel()">
+    Cancel
+  </button>
+
+</form>
+
+  </div>
+</div>

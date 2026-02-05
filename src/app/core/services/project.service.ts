@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { AuthService } from './auth.service';
+import { ProjectMember } from '../models/member.model';
 
 export interface Project {
   id: number;
@@ -42,6 +43,12 @@ export class ProjectService implements OnDestroy {
   clearProjects() {
     this.projects$.next([]);
   }
+
+  getProjectMembers(projectId: number) {
+  return this.http.get<ProjectMember[]>(
+    `http://127.0.0.1:8000/api/projects/${projectId}/members/`
+  );
+}
 
   ngOnDestroy() {
     this.authSub.unsubscribe();
