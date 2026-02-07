@@ -43,9 +43,9 @@
         </option>
       </select>
 
-      <button type="submit" [disabled]="loading">
-        Save
-      </button>
+      <button [disabled]="loading">
+       {{ loading ? 'Saving...' : 'Save' }}
+     </button>
 
       <button type="button" (click)="cancel()">
         Cancel

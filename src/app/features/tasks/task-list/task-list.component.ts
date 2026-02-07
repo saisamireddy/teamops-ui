@@ -19,19 +19,19 @@ import { EditTaskComponent } from '../edit-task/edit-task.component';
   selector: 'app-task-list',
   standalone: true,
   templateUrl: './task-list.component.html',
+  styleUrl: './task-list.component.css',
   imports: [CommonModule,FormsModule, CreateTaskComponent, EditTaskComponent]
 })
 export class TaskListComponent implements OnInit, OnDestroy {
   tasks: Task[] = [];
   visibleTasks: any[] = [];
+  lastUpdatedTaskId: number | null = null;
 
   filters: TaskFilter = {};
   showCreateModal = false;
   projectMembers: ProjectMember[] = [];
   showEditModal = false;
   editingTask: Task | null = null;
-  loading = false;
-  error: string | null = null;
   showTrashModal = false;
   trashTasks: Task[] = [];
 
@@ -43,7 +43,13 @@ export class TaskListComponent implements OnInit, OnDestroy {
   private wsSub!: Subscription;
   currentProjectId: number | null = null;
   private hydrated = false;
-assignees: any;
+  assignees: any;
+  //feedback states
+  isLoadingTasks = false;
+  isSavingTask = false;
+  isDeletingTask: number | null = null;
+  errorMessage: string | null = null;
+  private errorTimeout: any = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -74,8 +80,8 @@ assignees: any;
 
 private loadTasks(projectId: number) {
   this.hydrated = false;
-  this.loading = true;
-  this.error = null;
+  this.isLoadingTasks = true;
+  this.errorMessage = null;
 
   this.taskService.getTasks(projectId).subscribe({
     next: tasks => {
@@ -87,17 +93,18 @@ private loadTasks(projectId: number) {
       });
 
       this.hydrated = true;
-      this.loading = false;
+      this.isLoadingTasks = false;
 
+      this.errorMessage = null;
       
       this.applyFilters();
       this.cdr.markForCheck();
     },
 
     error: err => {
-      console.error('Task load failed:', err);
-      this.loading = false;
-      this.error = 'Failed to load tasks';
+      this.showError('Failed to load tasks');
+      this.isLoadingTasks = false;
+      this.cdr.markForCheck();
     }
   });
 }
@@ -123,17 +130,23 @@ closeCreateModal() {
      if (!this.hydrated) {
     return; 
   }
+
+  if (event.type === 'WS_ERROR') {
+  this.showError('Realtime connection lost');
+}
     if (!event || event.entity !== 'task' || !event.action || !event.data) {
       return;
     }
 
     const task: Task = event.data;
 
+    if (task.optimistic) return;
+
     //  IDEMPOTENCY CHECK
 const incomingTs = new Date(task.updated_at).getTime();
 const lastTs = this.taskVersions.get(task.id);
 
-if (!['DELETED', 'RESTORED'].includes(event.action) && lastTs !== undefined && lastTs >= incomingTs) {
+if ( lastTs !== undefined && lastTs >= incomingTs) {
   return;
 }
 
@@ -143,7 +156,8 @@ if (!['DELETED', 'RESTORED'].includes(event.action) && lastTs !== undefined && l
     switch (event.action) {
       case 'CREATED':
       case 'RESTORED':
-        this.tasks = [...this.tasks.filter(t => t.id !== task.id), task];
+        this.tasks = this.tasks.filter( t => !(t.optimistic && t.title === task.title));
+        this.tasks.push(task);
         break;
 
       case 'UPDATED':
@@ -158,6 +172,8 @@ if (!['DELETED', 'RESTORED'].includes(event.action) && lastTs !== undefined && l
     }
      this.applyFilters();
      this.cdr.markForCheck(); 
+     this.lastUpdatedTaskId = task.id;
+    setTimeout(() => {this.lastUpdatedTaskId = null; this.cdr.markForCheck();}, 1500);
   }
 
 private applyFilters() {
@@ -267,6 +283,7 @@ clearFilters() {
 
 // edit 
 openEditModal(task: Task) {
+  if (task.is_deleted) return;
   this.editingTask = task;
   this.showEditModal = true;
 }
@@ -278,12 +295,24 @@ closeEditModal() {
 
 //delete
 deleteTask(taskId: number) {
-  if (!confirm('Delete this task?')) return;
+  this.isDeletingTask = taskId;
+  const backup = [...this.tasks];
+
+  this.tasks = this.tasks.filter(t => t.id !== taskId);
+  this.applyFilters();
 
   this.taskService.deleteTask(taskId).subscribe({
-    error: err => console.error('Delete failed', err)
+    next: () => {
+      this.isDeletingTask = null;
+    },
+    error: () => {
+      this.showError('Delete failed');
+      this.isDeletingTask = null;
+      this.tasks = backup;
+      this.applyFilters();
+      this.cdr.markForCheck();
+    },
   });
-
 }
 
 //restore
@@ -311,6 +340,26 @@ private loadTrashTasks() {
 
 closeTrashModal() {
   this.showTrashModal = false;
+}
+
+addOptimisticTask(task: any) {
+  this.tasks = [task, ...this.tasks];
+  this.applyFilters();
+}
+//error handler
+private showError(message: string) {
+  this.errorMessage = message;
+
+  if (this.errorTimeout) {
+    clearTimeout(this.errorTimeout);
+  }
+
+  this.errorTimeout = setTimeout(() => {
+    this.errorMessage = null;
+    this.cdr.markForCheck();
+  }, 3500);
+
+  this.cdr.markForCheck();
 }
 
   ngOnDestroy() {

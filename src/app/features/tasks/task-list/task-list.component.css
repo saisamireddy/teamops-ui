@@ -1,0 +1,12 @@
+.highlight {
+  background-color: #fff3cd;
+  transition: background-color 1s ease;
+}
+
+.error-banner {
+  background: #ffebee;
+  color: #b71c1c;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
