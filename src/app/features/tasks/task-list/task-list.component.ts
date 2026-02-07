@@ -30,9 +30,14 @@ export class TaskListComponent implements OnInit, OnDestroy {
   projectMembers: ProjectMember[] = [];
   showEditModal = false;
   editingTask: Task | null = null;
+  loading = false;
+  error: string | null = null;
+  showTrashModal = false;
+  trashTasks: Task[] = [];
 
   //  Idempotency guard: taskId → last updated_at
-  private taskVersions = new Map<number, string>();
+  private taskVersions = new Map<number, number>();
+  
 
   private routeSub!: Subscription;
   private wsSub!: Subscription;
@@ -69,21 +74,34 @@ assignees: any;
 
 private loadTasks(projectId: number) {
   this.hydrated = false;
+  this.loading = true;
+  this.error = null;
 
-  this.taskService.getTasks(projectId).subscribe(tasks => {
-    this.tasks = tasks;
+  this.taskService.getTasks(projectId).subscribe({
+    next: tasks => {
+      this.tasks = tasks;
 
- 
-    this.taskVersions.clear();
-    tasks.forEach(task => {
-      this.taskVersions.set(task.id, task.updated_at);
-    });
+      this.taskVersions.clear();
+      tasks.forEach(task => {
+       this.taskVersions.set(task.id,new Date(task.updated_at).getTime());
+      });
 
-    this.hydrated = true;          
-    this.applyFilters();
-    this.cdr.markForCheck(); 
+      this.hydrated = true;
+      this.loading = false;
+
+      
+      this.applyFilters();
+      this.cdr.markForCheck();
+    },
+
+    error: err => {
+      console.error('Task load failed:', err);
+      this.loading = false;
+      this.error = 'Failed to load tasks';
+    }
   });
 }
+
 
 private loadMembers(projectId: number) {
   
@@ -112,13 +130,15 @@ closeCreateModal() {
     const task: Task = event.data;
 
     //  IDEMPOTENCY CHECK
-    const lastVersion = this.taskVersions.get(task.id);
-    if (lastVersion && lastVersion >= task.updated_at) {
-      return; 
-    }
+const incomingTs = new Date(task.updated_at).getTime();
+const lastTs = this.taskVersions.get(task.id);
+
+if (!['DELETED', 'RESTORED'].includes(event.action) && lastTs !== undefined && lastTs >= incomingTs) {
+  return;
+}
 
     // Record newest version
-    this.taskVersions.set(task.id, task.updated_at);
+    this.taskVersions.set(task.id, incomingTs);
 
     switch (event.action) {
       case 'CREATED':
@@ -256,7 +276,42 @@ closeEditModal() {
   this.editingTask = null;
 }
 
+//delete
+deleteTask(taskId: number) {
+  if (!confirm('Delete this task?')) return;
 
+  this.taskService.deleteTask(taskId).subscribe({
+    error: err => console.error('Delete failed', err)
+  });
+
+}
+
+//restore
+restoreTask(taskId: number) {
+  this.taskService.restoreTask(taskId).subscribe(() => {
+    this.trashTasks = this.trashTasks.filter(t => t.id !== taskId);
+  });
+}
+openTrashModal() {
+  this.showTrashModal = true;
+  this.loadTrashTasks();
+}
+
+private loadTrashTasks() {
+  if (!this.currentProjectId) return;
+
+  this.taskService
+    .getDeletedTasks(this.currentProjectId)
+    .subscribe(tasks => {
+      this.trashTasks = tasks;
+      this.cdr.markForCheck();
+    
+    });
+}
+
+closeTrashModal() {
+  this.showTrashModal = false;
+}
 
   ngOnDestroy() {
     this.wsSub.unsubscribe();

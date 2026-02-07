@@ -1,11 +1,25 @@
 
-  <button (click)="openCreateModal()">+ New Task</button>
+  <button (click)="openCreateModal()">+ New Task</button> <button (click)="openTrashModal()">🗑️ Trash</button>
   <app-create-task
   *ngIf="showCreateModal"
   [projectId]="currentProjectId!"
   [members]="projectMembers"
   (close)="closeCreateModal()"
 ></app-create-task>
+<div *ngIf="showTrashModal" class="modal">
+  <h3>Deleted Tasks</h3>
+
+  <ul>
+    <li *ngFor="let task of trashTasks">
+      {{ task.title }}
+      <button (click)="restoreTask(task.id)">
+        ♻️ Restore
+      </button>
+    </li>
+  </ul>
+
+  <button (click)="closeTrashModal()">Close</button>
+</div>
 <!-- FILTER CONTROLS -->
 <div class="task-filters">
 <!-- Status Filter -->
@@ -50,12 +64,18 @@
 <hr />
 
 <!-- TASK LIST -->
-<div *ngIf="visibleTasks.length === 0">
+ <div *ngIf="loading">Loading tasks...</div>
+
+<div *ngIf="error">
+  {{ error }}
+</div>
+<div *ngIf=" !loading && visibleTasks.length === 0">
   No tasks in this project.
 </div>
 
 <ul>
-  <li *ngFor="let task of visibleTasks">
+  <li *ngFor="let task of visibleTasks"
+    [style.opacity]="task.is_deleted ? 0.5 : 1">
     <strong>{{ task.title }}</strong>
     —
     {{ task.status }}
@@ -66,6 +86,13 @@
     </span>
 
   <button (click)="openEditModal(task)">Edit</button>
+
+<button
+  *ngIf="!task.is_deleted"
+  (click)="deleteTask(task.id)">
+  Delete
+</button>
+
 
   </li>
 </ul>
