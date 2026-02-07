@@ -19,11 +19,13 @@ import { EditTaskComponent } from '../edit-task/edit-task.component';
   selector: 'app-task-list',
   standalone: true,
   templateUrl: './task-list.component.html',
+  styleUrl: './task-list.component.css',
   imports: [CommonModule,FormsModule, CreateTaskComponent, EditTaskComponent]
 })
 export class TaskListComponent implements OnInit, OnDestroy {
   tasks: Task[] = [];
   visibleTasks: any[] = [];
+  lastUpdatedTaskId: number | null = null;
 
   filters: TaskFilter = {};
   showCreateModal = false;
@@ -134,11 +136,13 @@ closeCreateModal() {
 
     const task: Task = event.data;
 
+    if (task.optimistic) return;
+
     //  IDEMPOTENCY CHECK
 const incomingTs = new Date(task.updated_at).getTime();
 const lastTs = this.taskVersions.get(task.id);
 
-if (!['DELETED', 'RESTORED'].includes(event.action) && lastTs !== undefined && lastTs >= incomingTs) {
+if ( lastTs !== undefined && lastTs >= incomingTs) {
   return;
 }
 
@@ -164,6 +168,8 @@ if (!['DELETED', 'RESTORED'].includes(event.action) && lastTs !== undefined && l
     }
      this.applyFilters();
      this.cdr.markForCheck(); 
+     this.lastUpdatedTaskId = task.id;
+    setTimeout(() => {this.lastUpdatedTaskId = null; this.cdr.markForCheck();}, 1500);
   }
 
 private applyFilters() {
@@ -273,6 +279,7 @@ clearFilters() {
 
 // edit 
 openEditModal(task: Task) {
+  if (task.is_deleted) return;
   this.editingTask = task;
   this.showEditModal = true;
 }
