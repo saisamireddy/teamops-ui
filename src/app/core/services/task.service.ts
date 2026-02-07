@@ -70,4 +70,11 @@ export class TaskService {
       {}
     );
   }
+
+  //fetch the deleted tasks
+  getDeletedTasks(projectId: number) {
+  return this.http.get<Task[]>(
+    `${this.baseUrl}/api/projects/${projectId}/tasks/?deleted=true`
+  );
+}
 }
