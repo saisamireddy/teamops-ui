@@ -48,6 +48,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
   isLoadingTasks = false;
   isSavingTask = false;
   isDeletingTask: number | null = null;
+  isRestoringTask : number | null = null;
   errorMessage: string | null = null;
   private errorTimeout: any = null;
 
@@ -317,9 +318,22 @@ deleteTask(taskId: number) {
 
 //restore
 restoreTask(taskId: number) {
-  this.taskService.restoreTask(taskId).subscribe(() => {
+  this.isRestoringTask = taskId;
+    const backup = [...this.trashTasks];
     this.trashTasks = this.trashTasks.filter(t => t.id !== taskId);
+  this.taskService.restoreTask(taskId).subscribe( {
+    next: () => {
+      this.isRestoringTask = null;
+    },
+    error: (err) => {
+      this.trashTasks = backup; 
+      this.isRestoringTask = null;
+      this.showError('Failed to restore task'); 
+      this.cdr.markForCheck(); 
+      
+    }
   });
+  
 }
 openTrashModal() {
   this.showTrashModal = true;

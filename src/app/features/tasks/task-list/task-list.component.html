@@ -13,9 +13,12 @@
   <ul>
     <li *ngFor="let task of trashTasks">
       {{ task.title }}
-      <button (click)="restoreTask(task.id)">
-        ♻️ Restore
-      </button>
+<button (click)="restoreTask(task.id)" [disabled]="isRestoringTask === task.id">
+
+  <span *ngIf="isRestoringTask === task.id">Restoring...</span>
+  <span *ngIf="isRestoringTask !== task.id">♻️ Restore</span>
+
+</button>
     </li>
   </ul>
 
@@ -71,7 +74,7 @@
   {{ errorMessage }}
 </div>
 <div *ngIf=" !isLoadingTasks && visibleTasks.length === 0">
-  No tasks in this project.
+  No tasks yet — create one to get started.
 </div>
 
 <ul>
