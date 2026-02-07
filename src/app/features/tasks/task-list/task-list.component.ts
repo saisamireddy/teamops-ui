@@ -30,8 +30,6 @@ export class TaskListComponent implements OnInit, OnDestroy {
   projectMembers: ProjectMember[] = [];
   showEditModal = false;
   editingTask: Task | null = null;
-  loading = false;
-  error: string | null = null;
   showTrashModal = false;
   trashTasks: Task[] = [];
 
@@ -43,7 +41,12 @@ export class TaskListComponent implements OnInit, OnDestroy {
   private wsSub!: Subscription;
   currentProjectId: number | null = null;
   private hydrated = false;
-assignees: any;
+  assignees: any;
+  //feedback states
+  isLoadingTasks = false;
+  isSavingTask = false;
+  isDeletingTask: number | null = null;
+  errorMessage: string | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -74,8 +77,8 @@ assignees: any;
 
 private loadTasks(projectId: number) {
   this.hydrated = false;
-  this.loading = true;
-  this.error = null;
+  this.isLoadingTasks = true;
+  this.errorMessage = null;
 
   this.taskService.getTasks(projectId).subscribe({
     next: tasks => {
@@ -87,8 +90,9 @@ private loadTasks(projectId: number) {
       });
 
       this.hydrated = true;
-      this.loading = false;
+      this.isLoadingTasks = false;
 
+      this.errorMessage = null;
       
       this.applyFilters();
       this.cdr.markForCheck();
@@ -96,8 +100,9 @@ private loadTasks(projectId: number) {
 
     error: err => {
       console.error('Task load failed:', err);
-      this.loading = false;
-      this.error = 'Failed to load tasks';
+      this.errorMessage = 'Failed to load tasks';
+      this.isLoadingTasks = false;
+      this.cdr.markForCheck();
     }
   });
 }
@@ -107,7 +112,7 @@ private loadMembers(projectId: number) {
   
   this.projectService.getProjectMembers(projectId)
     .subscribe(members => {
-      this.projectMembers = members;
+      this.assignees = members;
     });
 }
 openCreateModal() {
@@ -278,12 +283,18 @@ closeEditModal() {
 
 //delete
 deleteTask(taskId: number) {
-  if (!confirm('Delete this task?')) return;
+  this.isDeletingTask = taskId;
 
   this.taskService.deleteTask(taskId).subscribe({
-    error: err => console.error('Delete failed', err)
+    next: () => {
+      this.isDeletingTask = null;
+    },
+    error: () => {
+      this.errorMessage = 'Delete failed';
+      this.isDeletingTask = null;
+      this.cdr.markForCheck();
+    },
   });
-
 }
 
 //restore

@@ -64,12 +64,12 @@
 <hr />
 
 <!-- TASK LIST -->
- <div *ngIf="loading">Loading tasks...</div>
+ <div *ngIf="isLoadingTasks">Loading tasks...</div>
 
-<div *ngIf="error">
-  {{ error }}
+<div *ngIf="errorMessage" class="error">
+  {{ errorMessage }}
 </div>
-<div *ngIf=" !loading && visibleTasks.length === 0">
+<div *ngIf=" !isLoadingTasks && visibleTasks.length === 0">
   No tasks in this project.
 </div>
 
@@ -88,9 +88,10 @@
   <button (click)="openEditModal(task)">Edit</button>
 
 <button
-  *ngIf="!task.is_deleted"
-  (click)="deleteTask(task.id)">
-  Delete
+  (click)="deleteTask(task.id)"
+  [disabled]="isDeletingTask === task.id"
+>
+  {{ isDeletingTask === task.id ? 'Deleting…' : 'Delete' }}
 </button>
 
 
