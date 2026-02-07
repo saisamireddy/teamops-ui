@@ -8,4 +8,5 @@ export interface Task {
   assigned_username: string | null;
   is_deleted: boolean;
   updated_at: string;
+  optimistic?: boolean;
 }

@@ -4,6 +4,7 @@
   *ngIf="showCreateModal"
   [projectId]="currentProjectId!"
   [members]="projectMembers"
+  (optimisticCreate)="addOptimisticTask($event)"
   (close)="closeCreateModal()"
 ></app-create-task>
 <div *ngIf="showTrashModal" class="modal">
@@ -52,7 +53,7 @@
   (change)="onAssigneeChange($any($event.target).value)"
 >
   <option value="">All Assignees</option>
-  <option *ngFor="let u of assignees" [value]="u.id">
+  <option *ngFor="let u of projectMembers" [value]="u.id">
     {{ u.username }}
   </option>
 </select>

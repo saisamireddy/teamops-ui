@@ -112,7 +112,7 @@ private loadMembers(projectId: number) {
   
   this.projectService.getProjectMembers(projectId)
     .subscribe(members => {
-      this.assignees = members;
+      this.projectMembers = members;
     });
 }
 openCreateModal() {
@@ -148,7 +148,8 @@ if (!['DELETED', 'RESTORED'].includes(event.action) && lastTs !== undefined && l
     switch (event.action) {
       case 'CREATED':
       case 'RESTORED':
-        this.tasks = [...this.tasks.filter(t => t.id !== task.id), task];
+        this.tasks = this.tasks.filter( t => !(t.optimistic && t.title === task.title));
+        this.tasks.push(task);
         break;
 
       case 'UPDATED':
@@ -284,6 +285,10 @@ closeEditModal() {
 //delete
 deleteTask(taskId: number) {
   this.isDeletingTask = taskId;
+  const backup = [...this.tasks];
+
+  this.tasks = this.tasks.filter(t => t.id !== taskId);
+  this.applyFilters();
 
   this.taskService.deleteTask(taskId).subscribe({
     next: () => {
@@ -292,6 +297,8 @@ deleteTask(taskId: number) {
     error: () => {
       this.errorMessage = 'Delete failed';
       this.isDeletingTask = null;
+      this.tasks = backup;
+      this.applyFilters();
       this.cdr.markForCheck();
     },
   });
@@ -322,6 +329,11 @@ private loadTrashTasks() {
 
 closeTrashModal() {
   this.showTrashModal = false;
+}
+
+addOptimisticTask(task: any) {
+  this.tasks = [task, ...this.tasks];
+  this.applyFilters();
 }
 
   ngOnDestroy() {

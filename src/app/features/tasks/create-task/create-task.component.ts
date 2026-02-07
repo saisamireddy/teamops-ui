@@ -15,6 +15,7 @@ export class CreateTaskComponent {
   @Input() members: { id: number; username: string }[] = [];
 
   @Output() close = new EventEmitter<void>();
+  @Output() optimisticCreate = new EventEmitter<any>();
 
   loading = false;
   error: string | null = null;
@@ -34,6 +35,19 @@ export class CreateTaskComponent {
       this.error = 'Title is required';
       return;
     }
+
+    const tempTask = {
+      id: Date.now(), // temporary id
+      title: this.form.title,
+      description: this.form.description,
+      status: this.form.status,
+      priority: this.form.priority,
+      assigned_to: this.form.assigned_to,
+      updated_at: new Date().toISOString(),
+      optimistic: true
+    };
+
+    this.optimisticCreate.emit(tempTask);
 
     this.loading = true;
     this.error = null;
