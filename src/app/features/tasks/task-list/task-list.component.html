@@ -67,7 +67,7 @@
 <!-- TASK LIST -->
  <div *ngIf="isLoadingTasks">Loading tasks...</div>
 
-<div *ngIf="errorMessage" class="error">
+<div *ngIf="errorMessage" class=" error-banner">
   {{ errorMessage }}
 </div>
 <div *ngIf=" !isLoadingTasks && visibleTasks.length === 0">

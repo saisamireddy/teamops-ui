@@ -71,6 +71,8 @@ export class TaskSocketService implements OnDestroy {
     };
 
     this.socket.onerror = () => {
+      console.warn('[WS ERROR]');
+      this.events$.next({ type: 'WS_ERROR' });
       this.socket?.close();
     };
   }

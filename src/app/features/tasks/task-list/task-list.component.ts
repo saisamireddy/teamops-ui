@@ -49,6 +49,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
   isSavingTask = false;
   isDeletingTask: number | null = null;
   errorMessage: string | null = null;
+  private errorTimeout: any = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -101,8 +102,7 @@ private loadTasks(projectId: number) {
     },
 
     error: err => {
-      console.error('Task load failed:', err);
-      this.errorMessage = 'Failed to load tasks';
+      this.showError('Failed to load tasks');
       this.isLoadingTasks = false;
       this.cdr.markForCheck();
     }
@@ -130,6 +130,10 @@ closeCreateModal() {
      if (!this.hydrated) {
     return; 
   }
+
+  if (event.type === 'WS_ERROR') {
+  this.showError('Realtime connection lost');
+}
     if (!event || event.entity !== 'task' || !event.action || !event.data) {
       return;
     }
@@ -302,7 +306,7 @@ deleteTask(taskId: number) {
       this.isDeletingTask = null;
     },
     error: () => {
-      this.errorMessage = 'Delete failed';
+      this.showError('Delete failed');
       this.isDeletingTask = null;
       this.tasks = backup;
       this.applyFilters();
@@ -341,6 +345,21 @@ closeTrashModal() {
 addOptimisticTask(task: any) {
   this.tasks = [task, ...this.tasks];
   this.applyFilters();
+}
+//error handler
+private showError(message: string) {
+  this.errorMessage = message;
+
+  if (this.errorTimeout) {
+    clearTimeout(this.errorTimeout);
+  }
+
+  this.errorTimeout = setTimeout(() => {
+    this.errorMessage = null;
+    this.cdr.markForCheck();
+  }, 3500);
+
+  this.cdr.markForCheck();
 }
 
   ngOnDestroy() {
