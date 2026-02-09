@@ -30,6 +30,17 @@ export class ProjectService implements OnDestroy {
     });
   }
 
+
+  createProject(payload: {
+  name: string;
+  members?: number[];
+}) {
+  return this.http.post<Project>(
+    'http://127.0.0.1:8000/api/projects/',
+    payload
+  );
+}
+
   loadProjects() {
     return this.http
       .get<Project[]>('http://127.0.0.1:8000/api/projects/')

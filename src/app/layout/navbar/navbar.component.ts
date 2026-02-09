@@ -5,16 +5,18 @@ import { CommonModule } from '@angular/common';
 import { ProjectService, Project } from '../../core/services/project.service';
 import { Observable } from 'rxjs';
 import { FormsModule } from '@angular/forms';
+import { CreateProjectComponent } from '../../features/projects/create-project/create-project.component';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, CreateProjectComponent],
   templateUrl: './navbar.component.html',
 })
 export class NavbarComponent implements OnInit, OnDestroy {
   projects$!: Observable<Project[]>;
   activeProjectId: number | null = null;
+  showCreateProjectModal = false;
 
   private navSub!: Subscription;
 
@@ -36,6 +38,17 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.activeProjectId = this.extractProjectId(e.urlAfterRedirects);
       });
   }
+
+  openCreateProjectModal() {
+  this.showCreateProjectModal = true;
+}
+
+closeCreateProjectModal() {
+  this.showCreateProjectModal = false;
+
+  // Refresh project list after creation
+  this.projects.loadProjects().subscribe();
+}
 
   private extractProjectId(url: string): number | null {
     const match = url.match(/\/projects\/(\d+)\/tasks/);
