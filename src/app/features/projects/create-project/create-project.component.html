@@ -1,0 +1,23 @@
+<div class="modal-overlay">
+  <div class="modal">
+
+    <h3>Create Project</h3>
+
+    <input
+      type="text"
+      [(ngModel)]="name"
+      placeholder="Project name"
+    />
+
+    <div *ngIf="error" class="error">
+      {{ error }}
+    </div>
+
+    <button (click)="submit()" [disabled]="loading">
+      {{ loading ? 'Creating...' : 'Create' }}
+    </button>
+
+    <button (click)="cancel()">Cancel</button>
+
+  </div>
+</div>
