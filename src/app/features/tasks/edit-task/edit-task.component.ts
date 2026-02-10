@@ -10,9 +10,11 @@ import { OnChanges, SimpleChanges } from '@angular/core';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './edit-task.component.html',
+  styleUrl: './edit-task.component.css',
 })
 export class EditTaskComponent implements OnChanges{
   @Input() task!: Task;
+  @Input() projectId!: number;
   @Input() members: { id: number; username: string }[] = [];
 
   @Output() close = new EventEmitter<void>();

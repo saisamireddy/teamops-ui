@@ -9,6 +9,7 @@ import { Task } from '../../../core/models/task.model';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './create-task.component.html',
+  styleUrl: './create-task.component.css',
 })
 export class CreateTaskComponent {
   @Input() projectId!: number;

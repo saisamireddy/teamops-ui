@@ -1,110 +1,259 @@
+<div class="tasks-container">
+  <!-- Header -->
+  <div class="tasks-header">
+    <div class="header-left">
+      <h1 class="page-title">Tasks</h1>
+      <p class="page-subtitle">Manage and track your project tasks</p>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-primary" (click)="openCreateModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        New Task
+      </button>
+      <button class="btn btn-secondary" (click)="openTrashModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        </svg>
+        Trash
+      </button>
+    </div>
+  </div>
 
-  <button (click)="openCreateModal()">+ New Task</button> <button (click)="openTrashModal()">🗑️ Trash</button>
-  <app-create-task
+  <!-- Filters Bar -->
+  <div class="filters-bar">
+    <div class="filter-group">
+      <label for="status-filter">Status</label>
+      <select
+        id="status-filter"
+        [value]="filters.status ?? ''"
+        (change)="onStatusChange($any($event.target).value)"
+        class="filter-select"
+      >
+        <option value="">All Status</option>
+        <option value="TODO">Todo</option>
+        <option value="IN_PROGRESS">In Progress</option>
+        <option value="BLOCKED">Blocked</option>
+        <option value="DONE">Done</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label for="priority-filter">Priority</label>
+      <select
+        id="priority-filter"
+        [value]="filters.priority ?? ''"
+        (change)="onPriorityChange($any($event.target).value)"
+        class="filter-select"
+      >
+        <option value="">All Priority</option>
+        <option value="LOW">Low</option>
+        <option value="MED">Medium</option>
+        <option value="HIGH">High</option>
+        <option value="CRIT">Critical</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label for="assignee-filter">Assignee</label>
+      <select
+        id="assignee-filter"
+        [value]="filters.assignee ?? ''"
+        (change)="onAssigneeChange($any($event.target).value)"
+        class="filter-select"
+      >
+        <option value="">All Assignees</option>
+        <option *ngFor="let u of projectMembers" [value]="u.id">
+          {{ u.username }}
+        </option>
+      </select>
+    </div>
+
+    <button class="btn-clear-filters" (click)="clearFilters()">Clear All</button>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoadingTasks) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading tasks...</p>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (errorMessage && !isLoadingTasks) {
+    <div class="error-alert">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <span>{{ errorMessage }}</span>
+    </div>
+  }
+
+  <!-- Empty State -->
+  @if (!isLoadingTasks && visibleTasks.length === 0) {
+    <div class="empty-state">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"></path>
+        <path d="M10 16l-3-3m0 0l3-3m-3 3h8"></path>
+      </svg>
+      <h3>No tasks yet</h3>
+      <p>Create your first task to get started</p>
+    </div>
+  }
+
+  <!-- Tasks List -->
+  @if (!isLoadingTasks && visibleTasks.length > 0) {
+    <div class="tasks-list">
+      @for (task of visibleTasks; track task.id) {
+        <div 
+          class="task-row" 
+          [class.highlight]="task.id === lastUpdatedTaskId"
+          [class.is-optimistic]="task.optimistic"
+        >
+          <!-- Status Indicator -->
+          <div class="row-status-indicator" [class]="'status-' + (task.status | lowercase)"></div>
+
+          <!-- Main Content -->
+          <div class="row-content">
+            <div class="row-title-section">
+              <h3 class="task-row-title">{{ task.title }}</h3>
+              @if (task.description) {
+                <p class="task-row-description">{{ task.description }}</p>
+              }
+            </div>
+
+            <div class="row-badges">
+              <span class="badge" [class]="'status-' + (task.status | lowercase)">
+                {{ task.status | titlecase }}
+              </span>
+              <span class="badge" [class]="'priority-' + (task.priority | lowercase)">
+                {{ task.priority }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Meta Information -->
+          <div class="row-meta">
+            <div class="meta-cell assignee-cell">
+              @if (task.assigned_username) {
+                <span class="assignee">{{ task.assigned_username }}</span>
+              } @else {
+                <span class="unassigned">Unassigned</span>
+              }
+            </div>
+            <div class="meta-cell date-cell">
+              {{ task.updated_at | date: 'short' }}
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="row-actions">
+            <button 
+              class="btn-icon edit-btn" 
+              (click)="openEditModal(task)"
+              title="Edit task"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L21 6.5z"></path>
+              </svg>
+            </button>
+            <button 
+              class="btn-icon delete-btn" 
+              (click)="deleteTask(task.id)" 
+              [disabled]="isDeletingTask === task.id"
+              [title]="isDeletingTask === task.id ? 'Deleting...' : 'Delete task'"
+            >
+              @if (isDeletingTask === task.id) {
+                <span class="spinner-sm"></span>
+              } @else {
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              }
+            </button>
+          </div>
+
+          @if (task.optimistic) {
+            <div class="optimistic-badge">Creating...</div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- Create Task Modal -->
+<app-create-task
   *ngIf="showCreateModal"
   [projectId]="currentProjectId!"
   [members]="projectMembers"
   (optimisticCreate)="addOptimisticTask($event)"
   (close)="closeCreateModal()"
 ></app-create-task>
-<div *ngIf="showTrashModal" class="modal">
-  <h3>Deleted Tasks</h3>
 
-  <ul>
-    <li *ngFor="let task of trashTasks">
-      {{ task.title }}
-<button (click)="restoreTask(task.id)" [disabled]="isRestoringTask === task.id">
-
-  <span *ngIf="isRestoringTask === task.id">Restoring...</span>
-  <span *ngIf="isRestoringTask !== task.id">♻️ Restore</span>
-
-</button>
-    </li>
-  </ul>
-
-  <button (click)="closeTrashModal()">Close</button>
-</div>
-<!-- FILTER CONTROLS -->
-<div class="task-filters">
-<!-- Status Filter -->
-<select
-  [value]="filters.status ?? ''"
-  (change)="onStatusChange($any($event.target).value)"
->
-  <option value="">All Status</option>
-  <option value="TODO">Todo</option>
-  <option value="IN_PROGRESS">In Progress</option>
-  <option value="BLOCKED">Blocked</option>
-  <option value="DONE">Done</option>
-</select>
-
-<!-- Priority Filter -->
-<select
-  [value]="filters.priority ?? ''"
-  (change)="onPriorityChange($any($event.target).value)"
->
-  <option value="">All Priority</option>
-  <option value="LOW">Low</option>
-  <option value="MED">Medium</option>
-  <option value="HIGH">High</option>
-  <option value="CRIT">Critical</option>
-</select>
-
-<!-- Assignee Filter -->
-<select
-  [value]="filters.assignee ?? ''"
-  (change)="onAssigneeChange($any($event.target).value)"
->
-  <option value="">All Assignees</option>
-  <option *ngFor="let u of projectMembers" [value]="u.id">
-    {{ u.username }}
-  </option>
-</select>
-
-<button type="button" (click)="clearFilters()">Clear Filters</button>
-
-</div>
-
-<hr />
-
-<!-- TASK LIST -->
- <div *ngIf="isLoadingTasks">Loading tasks...</div>
-
-<div *ngIf="errorMessage" class=" error-banner">
-  {{ errorMessage }}
-</div>
-<div *ngIf=" !isLoadingTasks && visibleTasks.length === 0">
-  No tasks yet — create one to get started.
-</div>
-
-<ul>
-  <li *ngFor="let task of visibleTasks"
-  [class.highlight]="task.id === lastUpdatedTaskId">
-    <strong>{{ task.title }}</strong>
-    —
-    {{ task.status }}
-    —
-    {{ task.priority }}
-    <span *ngIf="task.assigned_username">
-      ({{ task.assigned_username }})
-    </span>
-
-  <button (click)="openEditModal(task)">Edit</button>
-
-<button
-  (click)="deleteTask(task.id)"
-  [disabled]="isDeletingTask === task.id"
->
-  {{ isDeletingTask === task.id ? 'Deleting…' : 'Delete' }}
-</button>
-
-
-  </li>
-</ul>
-
+<!-- Edit Task Modal -->
 <app-edit-task
   *ngIf="showEditModal && editingTask"
   [task]="editingTask"
+  [projectId]="currentProjectId!"
   [members]="projectMembers"
   (close)="closeEditModal()"
 ></app-edit-task>
+
+<!-- Trash Modal -->
+<div *ngIf="showTrashModal" class="modal-backdrop" (click)="closeTrashModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Deleted Tasks</h2>
+      <button class="btn-close" (click)="closeTrashModal()" aria-label="Close">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    @if (trashTasks.length === 0) {
+      <div class="empty-trash">
+        <p>No deleted tasks yet</p>
+      </div>
+    } @else {
+      <div class="trash-list">
+        @for (task of trashTasks; track task.id) {
+          <div class="trash-item">
+            <div class="trash-info">
+              <h4>{{ task.title }}</h4>
+              <p>{{ task.status }} • {{ task.priority }}</p>
+            </div>
+            <button 
+              class="btn btn-sm btn-success" 
+              (click)="restoreTask(task.id)" 
+              [disabled]="isRestoringTask === task.id"
+            >
+              @if (isRestoringTask === task.id) {
+                <span class="spinner-sm"></span>
+              } @else {
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 7v6h6"></path>
+                  <path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"></path>
+                </svg>
+              }
+              Restore
+            </button>
+          </div>
+        }
+      </div>
+    }
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeTrashModal()">Close</button>
+    </div>
+  </div>
+</div>
