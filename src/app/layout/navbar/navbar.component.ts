@@ -12,6 +12,7 @@ import { CreateProjectComponent } from '../../features/projects/create-project/c
   standalone: true,
   imports: [CommonModule, FormsModule, CreateProjectComponent],
   templateUrl: './navbar.component.html',
+  styleUrl: './navbar.component.css',
 })
 export class NavbarComponent implements OnInit, OnDestroy {
   projects$!: Observable<Project[]>;

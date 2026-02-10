@@ -8,6 +8,7 @@ import { ProjectService } from '../../../core/services/project.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './create-project.component.html',
+  styleUrl: './create-project.component.css',
 })
 export class CreateProjectComponent {
 
