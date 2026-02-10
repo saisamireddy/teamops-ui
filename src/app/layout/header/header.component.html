@@ -1,7 +1,31 @@
-<header>
-  <h1>TeamOps Dashboard</h1>
+<header class="app-header" (click)="showMenu = false">
+  <div class="header-left">
+    <h1 class="logo">TeamOps Dashboard</h1>
+  </div>
 
-  @if (isLoggedIn) {
-    <button (click)="logout()">Logout</button>
-  }
+  <div class="header-right">
+    @if (isLoggedIn) {
+      <div class="user-menu" [class.open]="showMenu">
+        <button
+          class="menu-btn"
+          aria-haspopup="true"
+          [attr.aria-expanded]="showMenu"
+          (click)="$event.stopPropagation(); toggleMenu()"
+        >
+          <span class="avatar" aria-hidden="true"></span>
+          <span class="username">Account</span>
+          <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M6 9l6 6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+
+        @if (showMenu) {
+          <ul class="menu-list" role="menu">
+            <li role="menuitem"><a class="menu-link" routerLink="/profile">Profile</a></li>
+            <li role="menuitem"><button class="menu-link" (click)="logout(); showMenu = false">Logout</button></li>
+          </ul>
+        }
+      </div>
+    }
+  </div>
 </header>
