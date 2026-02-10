@@ -1,0 +1,119 @@
+:host {
+  display: block;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.02));
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid rgba(16,24,40,0.06);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.header-left .logo {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-menu {
+  position: relative;
+}
+
+.menu-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.06s;
+}
+
+.menu-btn:hover {
+  background: rgba(15,23,42,0.03);
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #60a5fa, #7c3aed);
+  box-shadow: 0 2px 6px rgba(2,6,23,0.08);
+  display: inline-block;
+}
+
+.username {
+  font-size: 14px;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.chev {
+  color: #6b7280;
+}
+
+.menu-list {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  min-width: 160px;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(2,6,23,0.12);
+  padding: 8px 6px;
+  list-style: none;
+  margin: 0;
+  border: 1px solid rgba(15,23,42,0.04);
+}
+
+.menu-list li {
+  padding: 4px 8px;
+}
+
+.menu-link {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: transparent;
+  color: #0f172a;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.menu-link:hover {
+  background: rgba(15,23,42,0.04);
+}
+
+/* Small screens adjustments */
+@media (max-width: 640px) {
+  .app-header {
+    padding: 10px 14px;
+  }
+
+  .username { display: none; }
+}
+
+.visually-hidden {
+  position: absolute !important;
+  height: 1px; width: 1px;
+  overflow: hidden;
+  clip: rect(1px, 1px, 1px, 1px);
+  white-space: nowrap;
+}

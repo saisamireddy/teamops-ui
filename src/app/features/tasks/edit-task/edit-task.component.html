@@ -1,56 +1,109 @@
-<div class="modal-backdrop">
-  <div class="modal">
-
-    <h2>Edit Task</h2>
-
-    <div *ngIf="error" class="error">
-      {{ error }}
+<div class="modal-backdrop" (click)="cancel()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <!-- Modal Header -->
+    <div class="modal-header">
+      <h2>Edit Task</h2>
+      <button class="btn-close" (click)="cancel()" aria-label="Close">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
     </div>
 
-    <form (ngSubmit)="submit()">
+    <!-- Modal Body -->
+    <form class="form" (ngSubmit)="submit()" #taskForm="ngForm">
+      <div class="modal-body">
+        <!-- Title Field -->
+        <div class="form-group">
+          <label for="title">Task Title *</label>
+          <input
+            id="title"
+            type="text"
+            [(ngModel)]="form.title"
+            name="title"
+            placeholder="Enter task title"
+            required
+            class="form-input"
+          />
+          <p class="form-hint">Update task title or leave it as is</p>
+        </div>
 
-      <input
-        [(ngModel)]="form.title"
-        name="title"
-        placeholder="Title"
-        required
-      />
+        <!-- Description Field -->
+        <div class="form-group">
+          <label for="description">Description</label>
+          <textarea
+            id="description"
+            [(ngModel)]="form.description"
+            name="description"
+            placeholder="Update task details..."
+            rows="4"
+            class="form-textarea"
+          ></textarea>
+          <p class="form-hint">Add or update task context</p>
+        </div>
 
-      <textarea
-        [(ngModel)]="form.description"
-        name="description"
-        placeholder="Description"
-      ></textarea>
+        <!-- Status & Priority Fields -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="status">Status *</label>
+            <select [(ngModel)]="form.status" name="status" id="status" class="form-select">
+              <option value="TODO">Todo</option>
+              <option value="IN_PROGRESS">In Progress</option>
+              <option value="BLOCKED">Blocked</option>
+              <option value="DONE">Done</option>
+            </select>
+          </div>
 
-      <select [(ngModel)]="form.status" name="status">
-        <option value="TODO">Todo</option>
-        <option value="IN_PROGRESS">In Progress</option>
-        <option value="BLOCKED">Blocked</option>
-        <option value="DONE">Done</option>
-      </select>
+          <div class="form-group">
+            <label for="priority">Priority *</label>
+            <select [(ngModel)]="form.priority" name="priority" id="priority" class="form-select">
+              <option value="LOW">Low</option>
+              <option value="MED">Medium</option>
+              <option value="HIGH">High</option>
+              <option value="CRIT">Critical</option>
+            </select>
+          </div>
+        </div>
 
-      <select [(ngModel)]="form.priority" name="priority">
-        <option value="LOW">Low</option>
-        <option value="MED">Medium</option>
-        <option value="HIGH">High</option>
-        <option value="CRIT">Critical</option>
-      </select>
+        <!-- Assignee Field -->
+        <div class="form-group">
+          <label for="assigned_to">Assign to</label>
+          <select [(ngModel)]="form.assigned_to" name="assigned_to" id="assigned_to" class="form-select">
+            <option [ngValue]="null">Unassigned</option>
+            <option *ngFor="let m of members" [ngValue]="m.id">
+              {{ m.username }}
+            </option>
+          </select>
+        </div>
 
-      <select [(ngModel)]="form.assigned_to" name="assigned_username">
-        <option [ngValue]="null">Unassigned</option>
-        <option *ngFor="let m of members" [ngValue]="m.id">
-          {{ m.username }}
-        </option>
-      </select>
+        <!-- Error Message -->
+        @if (error) {
+          <div class="error-message">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>{{ error }}</span>
+          </div>
+        }
+      </div>
 
-      <button [disabled]="loading">
-       {{ loading ? 'Saving...' : 'Save' }}
-     </button>
-
-      <button type="button" (click)="cancel()">
-        Cancel
-      </button>
-
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cancel()">
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="loading || !taskForm.valid">
+          @if (loading) {
+            <span class="spinner-sm"></span>
+            <span>Saving...</span>
+          } @else {
+            <span>Save Changes</span>
+          }
+        </button>
+      </div>
     </form>
   </div>
 </div>

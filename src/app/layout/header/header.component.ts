@@ -7,9 +7,11 @@ import { Subscription } from 'rxjs';
   selector: 'app-header',
   standalone: true,
   templateUrl: './header.component.html',
+  styleUrls: ['./header.component.css'],
 })
 export class HeaderComponent implements OnDestroy {
   isLoggedIn = false;
+  showMenu = false;
   private sub: Subscription;
 
   constructor(
@@ -24,6 +26,10 @@ export class HeaderComponent implements OnDestroy {
   logout() {
     this.auth.logout();
     this.router.navigate(['/login']);
+  }
+
+  toggleMenu(): void {
+    this.showMenu = !this.showMenu;
   }
 
   ngOnDestroy() {

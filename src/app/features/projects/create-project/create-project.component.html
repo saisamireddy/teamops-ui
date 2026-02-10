@@ -1,23 +1,30 @@
-<div class="modal-overlay">
-  <div class="modal">
-
+<div class="modal-overlay" (click)="cancel()">
+  <div class="modal" (click)="$event.stopPropagation()">
     <h3>Create Project</h3>
 
-    <input
-      type="text"
-      [(ngModel)]="name"
-      placeholder="Project name"
-    />
+    <form (ngSubmit)="submit()">
+      <div class="form-group">
+        <label for="project-name">Project Name</label>
+        <input
+          id="project-name"
+          type="text"
+          [(ngModel)]="name"
+          name="name"
+          placeholder="Enter project name"
+          required
+        />
+      </div>
 
-    <div *ngIf="error" class="error">
-      {{ error }}
-    </div>
+      @if (error) {
+        <div class="error">{{ error }}</div>
+      }
 
-    <button (click)="submit()" [disabled]="loading">
-      {{ loading ? 'Creating...' : 'Create' }}
-    </button>
-
-    <button (click)="cancel()">Cancel</button>
-
+      <div class="modal-actions">
+        <button type="submit" [disabled]="loading">
+          {{ loading ? 'Creating...' : 'Create Project' }}
+        </button>
+        <button type="button" (click)="cancel()">Cancel</button>
+      </div>
+    </form>
   </div>
 </div>
