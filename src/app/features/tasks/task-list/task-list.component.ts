@@ -39,8 +39,8 @@ export class TaskListComponent implements OnInit, OnDestroy {
   private taskVersions = new Map<number, number>();
   
 
-  private routeSub!: Subscription;
-  private wsSub!: Subscription;
+  private routeSub?: Subscription;
+  private wsSub?: Subscription;
   currentProjectId: number | null = null;
   private hydrated = false;
   assignees: any;
@@ -377,10 +377,9 @@ private showError(message: string) {
 }
 
   ngOnDestroy() {
-    this.wsSub.unsubscribe();
-    this.routeSub.unsubscribe();
+    this.wsSub?.unsubscribe();
+    this.routeSub?.unsubscribe();
 
-    
     this.projectContext.clearProject();
   }
 }

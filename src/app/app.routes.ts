@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { AuthGuard } from './core/guards/auth.guard';
 import { LoginComponent } from './features/auth/login.component';
 import { TaskListComponent } from './features/tasks/task-list/task-list.component';
+import { CreateProjectComponent } from './features/projects/create-project/create-project.component';
 
 export const routes: Routes = [
     {
@@ -11,6 +12,11 @@ export const routes: Routes = [
     {
     path: 'projects/:projectId/tasks',
     component: TaskListComponent,
+    canActivate: [AuthGuard],
+  },
+  {
+    path: 'projects/create',
+    component: CreateProjectComponent,
     canActivate: [AuthGuard],
   },
   {
