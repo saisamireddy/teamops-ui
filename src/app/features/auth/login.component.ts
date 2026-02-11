@@ -1,6 +1,7 @@
 import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { ProjectService } from '../../core/services/project.service';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 
@@ -21,7 +22,8 @@ export class LoginComponent {
   constructor(
     private auth: AuthService,
     private router: Router,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private projectService: ProjectService
   ) {
     this.form = this.fb.group({
       username: ['', [Validators.required, Validators.minLength(3)]],
@@ -47,10 +49,36 @@ export class LoginComponent {
     this.auth.login(username, password).subscribe({
       next: () => {
         this.loading.set(false);
-        const saved = localStorage.getItem('last_project_id');
-        this.router.navigate(
-          saved ? ['/projects', saved, 'tasks'] : ['/projects', 1, 'tasks']
-        );
+
+        // Load projects and decide where to redirect (Cases A/B/C)
+        this.projectService.loadProjects().subscribe({
+          next: (projects) => {
+            if (!projects || projects.length === 0) {
+              // Case A: no projects — go to create project page
+              this.router.navigate(['/projects', 'create']);
+              return;
+            }
+
+            const saved = localStorage.getItem('last_project_id');
+            const savedId = saved ? Number(saved) : null;
+
+            if (savedId && projects.some(p => p.id === savedId)) {
+              // Case B: saved project exists
+              this.router.navigate(['/projects', savedId, 'tasks']);
+              return;
+            }
+
+            // Case C: fallback to first available project
+            const firstId = projects[0].id;
+            localStorage.setItem('last_project_id', String(firstId));
+            this.router.navigate(['/projects', firstId, 'tasks']);
+          },
+          error: () => {
+            // If loading projects fails, fallback to login's previous behavior
+            const saved = localStorage.getItem('last_project_id');
+            this.router.navigate(saved ? ['/projects', saved, 'tasks'] : ['/projects', 1, 'tasks']);
+          }
+        });
       },
       error: (err) => {
         this.loading.set(false);
