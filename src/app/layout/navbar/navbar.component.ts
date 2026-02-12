@@ -18,6 +18,7 @@ import { ChangeDetectorRef } from '@angular/core';
 export class NavbarComponent implements OnInit, OnDestroy {
   projects$!: Observable<Project[]>;
   activeProjectId: number | null = null;
+  hasActiveProjects = true;
   showCreateProjectModal = false;
   showEditProjectModal = false;
   selectedProjectForEdit: Project | null = null;
@@ -26,6 +27,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   loadingArchived = false;
 
   private navSub!: Subscription;
+  private projectsSub!: Subscription;
 
   constructor(
     private router: Router,
@@ -35,6 +37,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.projects$ = this.projects.getProjects();
+    this.projectsSub = this.projects$.subscribe((projects) => {
+      const activeCount = (projects || []).filter(p => !p.is_archived).length;
+      this.hasActiveProjects = activeCount > 0;
+      if (!this.hasActiveProjects) {
+        this.activeProjectId = null;
+      }
+      this.cdr.markForCheck();
+    });
 
     // ✅ FIX 1: derive project synchronously on first load
     this.activeProjectId = this.extractProjectId(this.router.url);
@@ -106,6 +116,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
 
   ngOnDestroy() {
-    this.navSub.unsubscribe();
+    this.navSub?.unsubscribe();
+    this.projectsSub?.unsubscribe();
   }
 }

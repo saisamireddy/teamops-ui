@@ -112,6 +112,17 @@
         </div>
 
         <!-- Error Message -->
+        @if (success()) {
+          <div class="success-banner">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <circle cx="12" cy="12" r="10" stroke-width="2" />
+              <path d="M8 12l2.5 2.5L16 9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span>{{ success() }}</span>
+          </div>
+        }
+
+        <!-- Error Message -->
         @if (error()) {
           <div class="error-banner">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -140,7 +151,7 @@
 
         <!-- Sign Up Link -->
         <p class="sign-up-prompt">
-          Don't have an account? <a href="#">Create one</a>
+          Don't have an account? <a routerLink="/register">Create one</a>
         </p>
       </form>
 

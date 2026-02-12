@@ -1,7 +1,7 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Subscription } from 'rxjs';
-import { tap, map } from 'rxjs/operators';
+import { BehaviorSubject, Observable, Subscription, of } from 'rxjs';
+import { tap, map, catchError } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 import { ProjectMember } from '../models/member.model';
 import { environment } from '../../../environments/environment';
@@ -89,6 +89,36 @@ export class ProjectService implements OnDestroy {
     return this.http
       .get<Project[]>(`${this.baseUrl}/api/projects/`)
       .pipe(tap(projects => this.projects$.next(projects)));
+  }
+
+  resolveLandingRoute(): Observable<(string | number)[]> {
+    return this.loadProjects().pipe(
+      map(projects => {
+        if (!projects || projects.length === 0) {
+          return ['/no-projects'];
+        }
+
+        const saved = localStorage.getItem('last_project_id');
+        const savedId = saved ? Number(saved) : null;
+
+        if (savedId && projects.some(p => p.id === savedId)) {
+          return ['/projects', savedId, 'tasks'];
+        }
+
+        const firstId = projects[0].id;
+        localStorage.setItem('last_project_id', String(firstId));
+        return ['/projects', firstId, 'tasks'];
+      }),
+      catchError(() => {
+        const saved = localStorage.getItem('last_project_id');
+        const savedId = saved ? Number(saved) : null;
+        if (savedId && Number.isFinite(savedId)) {
+          return of(['/projects', savedId, 'tasks']);
+        }
+
+        return of(['/no-projects']);
+      })
+    );
   }
 
   getProjects() {
