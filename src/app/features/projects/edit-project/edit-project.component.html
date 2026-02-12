@@ -1,0 +1,135 @@
+<div class="modal-overlay" (click)="cancel()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Edit Project</h3>
+      <button type="button" class="btn-close" (click)="cancel()" [disabled]="loading">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <form (ngSubmit)="submit()">
+      <div class="form-group">
+        <label for="project-name">Project Name *</label>
+        <input
+          id="project-name"
+          type="text"
+          [(ngModel)]="name"
+          name="name"
+          placeholder="Enter project name"
+          required
+          [disabled]="loading || project.is_archived"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="project-description">Description</label>
+        <textarea
+          id="project-description"
+          [(ngModel)]="description"
+          name="description"
+          placeholder="Project description"
+          rows="4"
+          [disabled]="loading || project.is_archived"
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Team Members</label>
+        <div class="members-container">
+          @if (availableMembers.length > 0) {
+            <div class="members-dropdown">
+              <button
+                type="button"
+                class="dropdown-toggle"
+                (click)="showMembersDropdown = !showMembersDropdown"
+                [disabled]="loading || project.is_archived"
+              >
+                {{ selectedMembers.length > 0 ? selectedMembers.length + ' selected' : 'Select members...' }}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+              @if (showMembersDropdown) {
+                <div class="dropdown-menu">
+                  @for (member of availableMembers; track member.id) {
+                    <label class="member-checkbox">
+                      <input
+                        type="checkbox"
+                        [checked]="isMemberSelected(member.id)"
+                        (change)="toggleMember(member.id)"
+                        [disabled]="loading || project.is_archived"
+                      />
+                      <span>{{ member.username }}</span>
+                    </label>
+                  }
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="text-muted">No team members available</p>
+          }
+        </div>
+      </div>
+
+      @if (error) {
+        <div class="error">{{ error }}</div>
+      }
+
+      @if (!project.is_archived) {
+        <div class="modal-actions">
+          <button type="submit" [disabled]="loading" class="btn-primary">
+            @if (loading) {
+              <span class="spinner"></span>
+              Saving...
+            } @else {
+              Save Changes
+            }
+          </button>
+          <button type="button" (click)="cancel()" [disabled]="loading" class="btn-secondary">
+            Cancel
+          </button>
+        </div>
+      }
+
+      @if (project.is_archived) {
+        <div class="archived-notice">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <span>This project is archived and cannot be edited</span>
+        </div>
+
+        <div class="archive-actions">
+          <button type="button" (click)="unarchiveProject()" [disabled]="archiveLoading" class="btn-unarchive">
+            {{ archiveLoading ? 'Restoring...' : 'Restore Project' }}
+          </button>
+          <button type="button" (click)="deleteProject()" [disabled]="loading" class="btn-danger">
+            Delete Project
+          </button>
+        </div>
+      }
+
+      @if (!project.is_archived) {
+        <div class="footer-section">
+          <hr />
+          <div class="danger-zone">
+            <h4>Danger Zone</h4>
+            <div class="danger-actions">
+              <button type="button" (click)="archiveProject()" [disabled]="archiveLoading" class="btn-warn">
+                {{ archiveLoading ? 'Archiving...' : 'Archive Project' }}
+              </button>
+              <button type="button" (click)="deleteProject()" [disabled]="loading" class="btn-danger">
+                Delete Project
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </form>
+  </div>
+</div>
