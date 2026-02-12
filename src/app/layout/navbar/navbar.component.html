@@ -16,23 +16,78 @@
     @if (projects) {
       <div class="projects-list">
         @for (project of projects; track project.id) {
-          <button
-            class="project-item"
-            [class.active]="project.id === activeProjectId"
-            (click)="switchProject(project.id)"
-            [title]="project.name"
-          >
-            <span class="project-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M3 3h2v2H3V3zm4 0h2v2H7V3zm4 0h2v2h-2V3zm4 0h2v2h-2V3zm4 0h2v2h-2V3zM3 7h2v2H3V7zm0 4h2v2H3v-2zm0 4h2v2H3v-2zm0 4h2v2H3v-2zm4-12h2v2H7V7zm0 4h2v2H7v-2zm0 4h2v2H7v-2zm0 4h2v2H7v-2zm4-12h2v2h-2V7zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2zm4-12h2v2h-2V7zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2zm4-12h2v2h-2V7zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2z"/>
-              </svg>
-            </span>
-            <span class="project-name">{{ project.name }}</span>
-          </button>
+          @if (!project.is_archived) {
+            <div class="project-item-wrapper">
+              <button
+                class="project-item"
+                [class.active]="project.id === activeProjectId"
+                (click)="switchProject(project.id)"
+                [title]="project.name"
+              >
+                <span class="project-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3 3h2v2H3V3zm4 0h2v2H7V3zm4 0h2v2h-2V3zm4 0h2v2h-2V3zm4 0h2v2h-2V3zM3 7h2v2H3V7zm0 4h2v2H3v-2zm0 4h2v2H3v-2zm0 4h2v2H3v-2zm4-12h2v2H7V7zm0 4h2v2H7v-2zm0 4h2v2H7v-2zm0 4h2v2H7v-2zm4-12h2v2h-2V7zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2zm4-12h2v2h-2V7zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2zm4-12h2v2h-2V7zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2z"/>
+                  </svg>
+                </span>
+                <span class="project-name">{{ project.name }}</span>
+              </button>
+              <button
+                class="project-menu"
+                (click)="openEditProjectModal(project)"
+                title="Edit project"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="1"></circle>
+                  <circle cx="19" cy="12" r="1"></circle>
+                  <circle cx="5" cy="12" r="1"></circle>
+                </svg>
+              </button>
+            </div>
+          }
         }
       </div>
     }
   </div>
+
+  <!-- Archived Projects Toggle -->
+  <div class="sidebar-separator"></div>
+
+  <button class="btn-archived-projects" (click)="toggleArchivedProjects()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="8 6 12 2 16 6"></polyline>
+      <line x1="12" y1="2" x2="12" y2="12"></line>
+      <polyline points="8 18 12 22 16 18"></polyline>
+      <line x1="12" y1="22" x2="12" y2="12"></line>
+    </svg>
+    <span>{{ showArchivedProjects ? 'Hide Archived' : 'Archived Projects' }}</span>
+  </button>
+
+  @if (showArchivedProjects) {
+    <div class="archived-projects-list">
+      @if (loadingArchived) {
+        <p class="loading-text">Loading...</p>
+      } @else if (archivedProjects.length > 0) {
+        @for (project of archivedProjects; track project.id) {
+          <div class="archived-item">
+            <span class="archived-icon">📦</span>
+            <span class="archived-name" title="Archived: {{ project.name }}">{{ project.name }}</span>
+            <button
+              class="btn-unarchive-quick"
+              (click)="openEditProjectModal(project)"
+              title="Restore or delete"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+            </button>
+          </div>
+        }
+      } @else {
+        <p class="empty-text">No archived projects</p>
+      }
+    </div>
+  }
 
   <!-- Sidebar Footer -->
   <div class="sidebar-footer">
@@ -40,8 +95,15 @@
   </div>
 </nav>
 
-<!-- Modal -->
+<!-- Create Project Modal -->
 <app-create-project
   *ngIf="showCreateProjectModal"
   (close)="closeCreateProjectModal()"
 ></app-create-project>
+
+<!-- Edit Project Modal -->
+<app-edit-project
+  *ngIf="showEditProjectModal && selectedProjectForEdit"
+  [project]="selectedProjectForEdit"
+  (close)="closeEditProjectModal()"
+></app-edit-project>

@@ -4,7 +4,7 @@
 
     <form (ngSubmit)="submit()">
       <div class="form-group">
-        <label for="project-name">Project Name</label>
+        <label for="project-name">Project Name *</label>
         <input
           id="project-name"
           type="text"
@@ -12,7 +12,58 @@
           name="name"
           placeholder="Enter project name"
           required
+          [disabled]="loading"
         />
+      </div>
+
+      <div class="form-group">
+        <label for="project-description">Description</label>
+        <textarea
+          id="project-description"
+          [(ngModel)]="description"
+          name="description"
+          placeholder="Project description (optional)"
+          rows="4"
+          [disabled]="loading"
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Team Members</label>
+        <div class="members-container">
+          @if (availableMembers.length > 0) {
+            <div class="members-dropdown">
+              <button
+                type="button"
+                class="dropdown-toggle"
+                (click)="showMembersDropdown = !showMembersDropdown"
+                [disabled]="loading"
+              >
+                {{ selectedMembers.length > 0 ? selectedMembers.length + ' selected' : 'Select members...' }}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+              @if (showMembersDropdown) {
+                <div class="dropdown-menu">
+                  @for (member of availableMembers; track member.id) {
+                    <label class="member-checkbox">
+                      <input
+                        type="checkbox"
+                        [checked]="isMemberSelected(member.id)"
+                        (change)="toggleMember(member.id)"
+                        [disabled]="loading"
+                      />
+                      <span>{{ member.username }}</span>
+                    </label>
+                  }
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="text-muted">No team members available</p>
+          }
+        </div>
       </div>
 
       @if (error) {
@@ -20,10 +71,17 @@
       }
 
       <div class="modal-actions">
-        <button type="submit" [disabled]="loading">
-          {{ loading ? 'Creating...' : 'Create Project' }}
+        <button type="submit" [disabled]="loading" class="btn-primary">
+          @if (loading) {
+            <span class="spinner"></span>
+            Creating...
+          } @else {
+            Create Project
+          }
         </button>
-        <button type="button" (click)="cancel()">Cancel</button>
+        <button type="button" (click)="cancel()" [disabled]="loading" class="btn-secondary">
+          Cancel
+        </button>
       </div>
     </form>
   </div>
