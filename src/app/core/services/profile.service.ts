@@ -12,12 +12,17 @@ export interface UserProfile {
   role: UserRole;
   first_name: string;
   last_name: string;
+  bio?: string | null;
+  avatar?: string | null;
+  avatar_url?: string | null;
 }
 
 export interface UpdateProfilePayload {
-  email: string;
-  first_name: string;
-  last_name: string;
+  email?: string;
+  first_name?: string;
+  last_name?: string;
+  bio?: string;
+  avatar?: File;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -27,10 +32,10 @@ export class ProfileService {
   constructor(private http: HttpClient) {}
 
   getProfile(): Observable<UserProfile> {
-    return this.http.get<UserProfile>(`${this.baseUrl}/api/users/me/`);
+    return this.http.get<UserProfile>(`${this.baseUrl}/api/auth/users/me/`);
   }
 
-  updateProfile(payload: UpdateProfilePayload): Observable<UserProfile> {
-    return this.http.patch<UserProfile>(`${this.baseUrl}/api/users/me/`, payload);
+  updateProfile(payload: FormData): Observable<UserProfile> {
+    return this.http.patch<UserProfile>(`${this.baseUrl}/api/auth/users/me/`, payload);
   }
 }

@@ -7,7 +7,13 @@
       </svg>
     </button>
     <div class="card-header">
-      <div class="avatar" aria-hidden="true">{{ initials() }}</div>
+      <div class="avatar" aria-hidden="true">
+        @if (avatarPreviewUrl() || currentAvatarUrl()) {
+          <img [src]="avatarPreviewUrl() || currentAvatarUrl() || ''" alt="" />
+        } @else {
+          <span>{{ initials() }}</span>
+        }
+      </div>
       <div class="header-copy">
         <h2>My Profile</h2>
         <p>Manage your account information.</p>
@@ -21,6 +27,26 @@
       </div>
     } @else {
       <form class="profile-form" [formGroup]="form" (ngSubmit)="saveProfile()">
+        <div class="field-row">
+          <label for="avatar">Avatar</label>
+          <div class="avatar-upload">
+            <label class="avatar-picker" for="avatar">
+              <span>Choose image</span>
+              <small>PNG, JPG, WEBP up to 5MB</small>
+            </label>
+            <input
+              id="avatar"
+              type="file"
+              accept="image/*"
+              (change)="onAvatarSelected($event)"
+              [disabled]="savingProfile()"
+            />
+          </div>
+          @if (getFieldError('avatar')) {
+            <span class="field-error">{{ getFieldError('avatar') }}</span>
+          }
+        </div>
+
         <div class="field-row">
           <label for="username">Username</label>
           <input id="username" type="text" formControlName="username" readonly />
@@ -68,6 +94,19 @@
           }
         </div>
 
+        <div class="field-row">
+          <label for="bio">Bio</label>
+          <textarea
+            id="bio"
+            formControlName="bio"
+            rows="4"
+            [attr.aria-invalid]="!!getFieldError('bio')"
+          ></textarea>
+          @if (getFieldError('bio') && (form.controls.bio.touched || fieldErrors().bio)) {
+            <span class="field-error">{{ getFieldError('bio') }}</span>
+          }
+        </div>
+
         <div class="field-row role-row">
           <label for="role">Role</label>
           <div class="role-wrap">
@@ -79,7 +118,7 @@
         </div>
 
         @if (successMessage()) {
-          <div class="feedback success" role="status" aria-live="polite">{{ successMessage() }}</div>
+          <div class="toast success" role="status" aria-live="polite">{{ successMessage() }}</div>
         }
 
         @if (errorMessage()) {

@@ -1,4 +1,4 @@
-<header class="app-header" (click)="showMenu = false">
+<header class="app-header">
   <div class="header-left">
     <h1 class="logo">TeamOps Dashboard</h1>
   </div>
@@ -21,7 +21,7 @@
 
         @if (showMenu) {
           <ul class="menu-list" role="menu">
-            <li role="menuitem"><a class="menu-link" routerLink="/profile">Profile</a></li>
+            <li role="menuitem"><a class="menu-link" routerLink="/profile" (click)="showMenu = false">Profile</a></li>
             <li role="menuitem"><button class="menu-link" (click)="logout(); showMenu = false">Logout</button></li>
           </ul>
         }
