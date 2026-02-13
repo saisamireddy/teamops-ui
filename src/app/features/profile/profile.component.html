@@ -20,12 +20,36 @@
       </div>
     </div>
 
-    @if (loadingProfile()) {
-      <div class="loading-state" aria-live="polite">
-        <span class="spinner" aria-hidden="true"></span>
-        <span>Loading profile...</span>
-      </div>
-    } @else {
+    <div class="tabs" role="tablist" aria-label="Profile sections">
+      <button
+        type="button"
+        role="tab"
+        class="tab-btn"
+        [class.active]="activeTab() === 'profile'"
+        [attr.aria-selected]="activeTab() === 'profile'"
+        (click)="setActiveTab('profile')"
+      >
+        Profile
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="tab-btn"
+        [class.active]="activeTab() === 'security'"
+        [attr.aria-selected]="activeTab() === 'security'"
+        (click)="setActiveTab('security')"
+      >
+        Security
+      </button>
+    </div>
+
+    @if (activeTab() === 'profile') {
+      @if (loadingProfile()) {
+        <div class="loading-state" aria-live="polite">
+          <span class="spinner" aria-hidden="true"></span>
+          <span>Loading profile...</span>
+        </div>
+      } @else {
       <form class="profile-form" [formGroup]="form" (ngSubmit)="saveProfile()">
         <div class="field-row">
           <label for="avatar">Avatar</label>
@@ -140,6 +164,24 @@
           </button>
         </div>
       </form>
+      }
+    }
+
+    @if (activeTab() === 'security') {
+      <section class="security-section" role="tabpanel" aria-label="Security settings">
+        <h3>Security Settings</h3>
+        <app-change-password></app-change-password>
+        <div class="security-card placeholder-card">
+          <h4>Two-Factor Authentication</h4>
+          <p>Set up 2FA to add an extra layer of account protection.</p>
+          <span class="status-chip">Coming Soon</span>
+        </div>
+        <div class="security-card placeholder-card">
+          <h4>Active Sessions</h4>
+          <p>Review signed-in devices and revoke sessions you do not recognize.</p>
+          <span class="status-chip">Coming Soon</span>
+        </div>
+      </section>
     }
   </div>
 </section>

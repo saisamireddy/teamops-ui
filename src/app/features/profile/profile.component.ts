@@ -6,14 +6,16 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { ProfileService, UserProfile } from '../../core/services/profile.service';
+import { ChangePasswordComponent } from './change-password.component';
 
 type ProfileField = 'email' | 'first_name' | 'last_name' | 'bio' | 'avatar';
 type ValidationMap = Partial<Record<ProfileField, string[]>>;
+type ProfileTab = 'profile' | 'security';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, ChangePasswordComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -43,6 +45,7 @@ export class ProfileComponent {
   readonly avatarPreviewUrl = signal<string | null>(null);
   readonly currentAvatarUrl = signal<string | null>(null);
   readonly avatarError = signal<string | null>(null);
+  readonly activeTab = signal<ProfileTab>('profile');
 
   readonly form = this.fb.nonNullable.group({
     username: [{ value: '', disabled: true }],
@@ -142,6 +145,10 @@ export class ProfileComponent {
     }
 
     this.router.navigate(['']);
+  }
+
+  setActiveTab(tab: ProfileTab): void {
+    this.activeTab.set(tab);
   }
 
   onAvatarSelected(event: Event): void {

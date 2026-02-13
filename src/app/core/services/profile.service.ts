@@ -25,6 +25,12 @@ export interface UpdateProfilePayload {
   avatar?: File;
 }
 
+export interface ChangePasswordPayload {
+  old_password: string;
+  new_password: string;
+  confirm_password: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
   private readonly baseUrl = environment.apiBaseUrl;
@@ -37,5 +43,9 @@ export class ProfileService {
 
   updateProfile(payload: FormData): Observable<UserProfile> {
     return this.http.patch<UserProfile>(`${this.baseUrl}/api/auth/users/me/`, payload);
+  }
+
+  changePassword(payload: ChangePasswordPayload): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/api/auth/users/change-password/`, payload);
   }
 }
