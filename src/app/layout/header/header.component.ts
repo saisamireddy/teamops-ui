@@ -1,11 +1,12 @@
-import { Component, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, ElementRef, HostListener, OnDestroy, inject } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-header',
   standalone: true,
+  imports: [RouterLink],
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.css'],
 })
@@ -13,6 +14,7 @@ export class HeaderComponent implements OnDestroy {
   isLoggedIn = false;
   showMenu = false;
   private sub: Subscription;
+  private readonly host = inject(ElementRef<HTMLElement>);
 
   constructor(
     private auth: AuthService,
@@ -30,6 +32,23 @@ export class HeaderComponent implements OnDestroy {
 
   toggleMenu(): void {
     this.showMenu = !this.showMenu;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.showMenu) {
+      return;
+    }
+
+    const target = event.target;
+    if (!(target instanceof Node)) {
+      return;
+    }
+
+    const menuEl = this.host.nativeElement.querySelector('.user-menu');
+    if (!menuEl || !menuEl.contains(target)) {
+      this.showMenu = false;
+    }
   }
 
   ngOnDestroy() {

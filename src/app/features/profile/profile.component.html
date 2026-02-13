@@ -1,0 +1,187 @@
+<section class="profile-page" (click)="closeProfile()">
+  <div class="profile-card" (click)="$event.stopPropagation()">
+    <button type="button" class="btn-close" (click)="closeProfile()" aria-label="Close profile page">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <line x1="18" y1="6" x2="6" y2="18" stroke-width="2" stroke-linecap="round"></line>
+        <line x1="6" y1="6" x2="18" y2="18" stroke-width="2" stroke-linecap="round"></line>
+      </svg>
+    </button>
+    <div class="card-header">
+      <div class="avatar" aria-hidden="true">
+        @if (avatarPreviewUrl() || currentAvatarUrl()) {
+          <img [src]="avatarPreviewUrl() || currentAvatarUrl() || ''" alt="" />
+        } @else {
+          <span>{{ initials() }}</span>
+        }
+      </div>
+      <div class="header-copy">
+        <h2>My Profile</h2>
+        <p>Manage your account information.</p>
+      </div>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Profile sections">
+      <button
+        type="button"
+        role="tab"
+        class="tab-btn"
+        [class.active]="activeTab() === 'profile'"
+        [attr.aria-selected]="activeTab() === 'profile'"
+        (click)="setActiveTab('profile')"
+      >
+        Profile
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="tab-btn"
+        [class.active]="activeTab() === 'security'"
+        [attr.aria-selected]="activeTab() === 'security'"
+        (click)="setActiveTab('security')"
+      >
+        Security
+      </button>
+    </div>
+
+    @if (activeTab() === 'profile') {
+      @if (loadingProfile()) {
+        <div class="loading-state" aria-live="polite">
+          <span class="spinner" aria-hidden="true"></span>
+          <span>Loading profile...</span>
+        </div>
+      } @else {
+      <form class="profile-form" [formGroup]="form" (ngSubmit)="saveProfile()">
+        <div class="field-row">
+          <label for="avatar">Avatar</label>
+          <div class="avatar-upload">
+            <label class="avatar-picker" for="avatar">
+              <span>Choose image</span>
+              <small>PNG, JPG, WEBP up to 5MB</small>
+            </label>
+            <input
+              id="avatar"
+              type="file"
+              accept="image/*"
+              (change)="onAvatarSelected($event)"
+              [disabled]="savingProfile()"
+            />
+          </div>
+          @if (getFieldError('avatar')) {
+            <span class="field-error">{{ getFieldError('avatar') }}</span>
+          }
+        </div>
+
+        <div class="field-row">
+          <label for="username">Username</label>
+          <input id="username" type="text" formControlName="username" readonly />
+        </div>
+
+        <div class="field-row">
+          <label for="email">Email</label>
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            autocomplete="email"
+            [attr.aria-invalid]="!!getFieldError('email')"
+          />
+          @if (getFieldError('email') && (form.controls.email.touched || fieldErrors().email)) {
+            <span class="field-error">{{ getFieldError('email') }}</span>
+          }
+        </div>
+
+        <div class="field-row">
+          <label for="first_name">First Name</label>
+          <input
+            id="first_name"
+            type="text"
+            formControlName="first_name"
+            autocomplete="given-name"
+            [attr.aria-invalid]="!!getFieldError('first_name')"
+          />
+          @if (getFieldError('first_name') && (form.controls.first_name.touched || fieldErrors().first_name)) {
+            <span class="field-error">{{ getFieldError('first_name') }}</span>
+          }
+        </div>
+
+        <div class="field-row">
+          <label for="last_name">Last Name</label>
+          <input
+            id="last_name"
+            type="text"
+            formControlName="last_name"
+            autocomplete="family-name"
+            [attr.aria-invalid]="!!getFieldError('last_name')"
+          />
+          @if (getFieldError('last_name') && (form.controls.last_name.touched || fieldErrors().last_name)) {
+            <span class="field-error">{{ getFieldError('last_name') }}</span>
+          }
+        </div>
+
+        <div class="field-row">
+          <label for="bio">Bio</label>
+          <textarea
+            id="bio"
+            formControlName="bio"
+            rows="4"
+            [attr.aria-invalid]="!!getFieldError('bio')"
+          ></textarea>
+          @if (getFieldError('bio') && (form.controls.bio.touched || fieldErrors().bio)) {
+            <span class="field-error">{{ getFieldError('bio') }}</span>
+          }
+        </div>
+
+        <div class="field-row role-row">
+          <label for="role">Role</label>
+          <div class="role-wrap">
+            <input id="role" type="text" formControlName="role" readonly />
+            <span class="role-badge" [class]="getRoleClass(form.controls.role.value)">
+              {{ form.controls.role.value || 'DEV' }}
+            </span>
+          </div>
+        </div>
+
+        @if (successMessage()) {
+          <div class="toast success" role="status" aria-live="polite">{{ successMessage() }}</div>
+        }
+
+        @if (errorMessage()) {
+          <div class="feedback error" role="alert">{{ errorMessage() }}</div>
+        }
+
+        <div class="actions">
+          <button
+            class="btn-save"
+            type="submit"
+            [disabled]="savingProfile() || loadingProfile()"
+          >
+            @if (savingProfile()) {
+              <span class="spinner" aria-hidden="true"></span>
+              <span>Saving...</span>
+            } @else {
+              <span>Save Changes</span>
+            }
+          </button>
+        </div>
+      </form>
+      }
+    }
+
+    @if (activeTab() === 'security') {
+      <section class="security-section" role="tabpanel" aria-label="Security settings">
+        <h3>Security Settings</h3>
+        <app-change-password></app-change-password>
+        <div class="security-card placeholder-card">
+          <h4>Two-Factor Authentication</h4>
+          <p>Set up 2FA to add an extra layer of account protection.</p>
+          <span class="status-chip">Coming Soon</span>
+        </div>
+        <div class="security-card placeholder-card">
+          <h4>Active Sessions</h4>
+          <p>Review signed-in devices and revoke sessions you do not recognize.</p>
+          <span class="status-chip">Coming Soon</span>
+        </div>
+      </section>
+    }
+  </div>
+</section>

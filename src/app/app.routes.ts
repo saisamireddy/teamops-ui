@@ -8,6 +8,7 @@ import { TaskListComponent } from './features/tasks/task-list/task-list.componen
 import { CreateProjectComponent } from './features/projects/create-project/create-project.component';
 import { EditProjectComponent } from './features/projects/edit-project/edit-project.component';
 import { NoProjectsComponent } from './features/projects/no-projects.component';
+import { ProfileComponent } from './features/profile/profile.component';
 import { MainLayoutComponent } from './layout/main-layout.component';
 
 export const routes: Routes = [
@@ -48,6 +49,11 @@ export const routes: Routes = [
       {
         path: 'no-projects',
         component: NoProjectsComponent,
+      },
+      {
+        path: 'profile',
+        component: ProfileComponent,
+        canActivate: [AuthGuard],
       },
     ],
   },
