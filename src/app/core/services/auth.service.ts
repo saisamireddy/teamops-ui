@@ -1,22 +1,59 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
+
+type UserRole = 'ADMIN' | 'PM' | 'DEV';
+
+export interface AuthUser {
+  id: number;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: UserRole | string;
+  is_active?: boolean;
+  avatar?: string | null;
+  date_joined?: string;
+}
+
+export interface LoginResponse {
+  access: string;
+  refresh?: string;
+  user: AuthUser;
+};
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly TOKEN_KEY = 'access_token';
-  private readonly AUTH_DEBUG_KEY = 'debug_auth';
-  private readonly role$ = new BehaviorSubject<'ADMIN' | 'PM' | 'DEV' | null>(null);
+  private readonly USER_KEY = 'auth_user';
+  private readonly role$ = new BehaviorSubject<UserRole | null>(null);
+  readonly currentUser = signal<AuthUser | null>(this.getStoredUser());
 
   private authenticated$ = new BehaviorSubject<boolean>(
     !!localStorage.getItem(this.TOKEN_KEY)
   );
 
   constructor(private http: HttpClient) {
-    if (this.getToken()) {
-      this.hydrateRoleFromTokenOrApi();
+    const token = this.getToken();
+    if (!token) {
+      this.clearStoredUser();
+      this.currentUser.set(null);
+      this.role$.next(null);
+      return;
+    }
+
+    const roleFromStoredUser = this.getRoleFromUser(this.currentUser());
+    const roleFromToken = this.getRoleFromToken();
+    this.role$.next(roleFromStoredUser ?? roleFromToken);
+
+    if (!this.currentUser() && roleFromToken) {
+      this.currentUser.set({
+        id: 0,
+        email: '',
+        first_name: '',
+        last_name: '',
+        role: roleFromToken,
+      });
     }
   }
 
@@ -32,24 +69,29 @@ export class AuthService {
   );
 }
 
-  login(username: string, password: string): Observable<any> {
-    return this.http.post<any>(`${environment.apiBaseUrl}/api/auth/login/`, {
+  login(username: string, password: string): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${environment.apiBaseUrl}/api/auth/login/`, {
       username,
       password,
     }).pipe(
       tap(response => {
+        const normalizedUser = this.normalizeUser(response.user);
         localStorage.setItem(this.TOKEN_KEY, response.access);
+        localStorage.setItem(this.USER_KEY, JSON.stringify(normalizedUser));
+        this.currentUser.set(normalizedUser);
+        this.role$.next(this.getRoleFromUser(normalizedUser));
         this.authenticated$.next(true);
-        this.hydrateRoleFromTokenOrApi();
       })
     );
   }
 
   logout(): void {
     localStorage.removeItem(this.TOKEN_KEY);
+    localStorage.removeItem(this.USER_KEY);
     localStorage.removeItem('last_project_id');
     this.authenticated$.next(false);
     this.role$.next(null);
+    this.currentUser.set(null);
   }
 
   getToken(): string | null {
@@ -64,47 +106,8 @@ export class AuthService {
     return this.authenticated$.asObservable();
   }
 
-  getUserRole(): 'ADMIN' | 'PM' | 'DEV' | null {
-    const token = this.getToken();
-    if (!token) {
-      this.debugAuth('getUserRole: no token found');
-      return null;
-    }
-
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1] || ''));
-      this.debugAuth('getUserRole: token payload', payload);
-      const isTokenAdmin =
-        payload?.is_admin === true ||
-        payload?.is_staff === true ||
-        payload?.is_superuser === true ||
-        payload?.user?.is_admin === true ||
-        payload?.user?.is_staff === true ||
-        payload?.user?.is_superuser === true;
-
-      if (isTokenAdmin) {
-        this.debugAuth('getUserRole: resolved ADMIN from staff/superuser/admin flags');
-        return 'ADMIN';
-      }
-
-      const roleValue =
-        payload?.role ??
-        payload?.user_role ??
-        payload?.user?.role ??
-        (Array.isArray(payload?.roles) ? payload.roles[0] : null);
-
-      if (typeof roleValue !== 'string') return this.role$.value;
-      const normalized = roleValue.toUpperCase();
-      if (normalized === 'ADMIN' || normalized === 'PM' || normalized === 'DEV') {
-        this.debugAuth('getUserRole: resolved from role field', normalized);
-        return normalized;
-      }
-      this.debugAuth('getUserRole: role field present but unsupported', roleValue);
-      return this.role$.value;
-    } catch {
-      this.debugAuth('getUserRole: failed to parse token payload');
-      return this.role$.value;
-    }
+  getUserRole(): UserRole | null {
+    return this.role$.value ?? this.getRoleFromUser(this.currentUser()) ?? this.getRoleFromToken();
   }
 
   canCreateProjects(): boolean {
@@ -113,83 +116,71 @@ export class AuthService {
   }
 
   isAdmin(): boolean {
-    const token = this.getToken();
-    if (!token) {
-      this.debugAuth('isAdmin: no token found');
-      return false;
-    }
-
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1] || ''));
-      this.debugAuth('isAdmin: token payload', payload);
-      if (
-        payload?.is_admin === true ||
-        payload?.is_staff === true ||
-        payload?.is_superuser === true ||
-        payload?.user?.is_admin === true ||
-        payload?.user?.is_staff === true ||
-        payload?.user?.is_superuser === true
-      ) {
-        this.debugAuth('isAdmin: true via admin/staff/superuser flags');
-        return true;
-      }
-    } catch {
-      this.debugAuth('isAdmin: failed to parse token payload');
-      return this.role$.value === 'ADMIN';
-    }
-
-    const isAdminByRole = this.getUserRole() === 'ADMIN';
-    this.debugAuth('isAdmin: fallback role check result', isAdminByRole);
-    return isAdminByRole;
+    return this.getUserRole() === 'ADMIN';
   }
 
-  roleState(): Observable<'ADMIN' | 'PM' | 'DEV' | null> {
+  roleState(): Observable<UserRole | null> {
     return this.role$.asObservable();
   }
 
-  private hydrateRoleFromTokenOrApi(): void {
-    const tokenRole = this.getRoleFromToken();
-    if (tokenRole) {
-      this.role$.next(tokenRole);
-      return;
-    }
-
-    this.http
-      .get<{ role?: string | null }>(`${environment.apiBaseUrl}/api/auth/users/me/`)
-      .pipe(
-        map((response) => this.normalizeRole(response?.role ?? null)),
-        catchError(() => {
-          this.debugAuth('hydrateRoleFromTokenOrApi: failed to fetch role from API');
-          return of(null);
-        })
-      )
-      .subscribe((role) => {
-        this.role$.next(role);
-        this.debugAuth('hydrateRoleFromTokenOrApi: resolved role', role);
-      });
-  }
-
-  private getRoleFromToken(): 'ADMIN' | 'PM' | 'DEV' | null {
+  private getRoleFromToken(): UserRole | null {
     const token = this.getToken();
     if (!token) {
       return null;
     }
 
     try {
-      const payload = JSON.parse(atob(token.split('.')[1] || ''));
-      const roleValue =
-        payload?.role ??
-        payload?.user_role ??
-        payload?.user?.role ??
-        (Array.isArray(payload?.roles) ? payload.roles[0] : null);
-
-      return this.normalizeRole(roleValue);
+      const payload = this.decodeJwtPayload(token);
+      return this.getRoleFromProfile(payload);
     } catch {
       return null;
     }
   }
 
-  private normalizeRole(roleValue: unknown): 'ADMIN' | 'PM' | 'DEV' | null {
+  private getRoleFromUser(user: AuthUser | null): UserRole | null {
+    if (!user) {
+      return null;
+    }
+    return this.getRoleFromProfile(user);
+  }
+
+  private getRoleFromProfile(data: unknown): UserRole | null {
+    if (!data || typeof data !== 'object') {
+      return null;
+    }
+
+    const profile = data as {
+      is_admin?: boolean;
+      is_staff?: boolean;
+      is_superuser?: boolean;
+      user?: { is_admin?: boolean; is_staff?: boolean; is_superuser?: boolean; role?: string | null };
+      role?: string | null;
+      user_role?: string | null;
+      roles?: string[] | null;
+    };
+
+    const isAdminFlag =
+      profile.is_admin === true ||
+      profile.is_staff === true ||
+      profile.is_superuser === true ||
+      profile.user?.is_admin === true ||
+      profile.user?.is_staff === true ||
+      profile.user?.is_superuser === true;
+
+    if (isAdminFlag) {
+      return 'ADMIN';
+    }
+
+    const roleValue =
+      profile.role ??
+      profile.user_role ??
+      profile.user?.role ??
+      (Array.isArray(profile.roles) ? profile.roles[0] : null);
+
+    return this.normalizeRole(roleValue);
+  }
+
+  private normalizeRole(roleValue: unknown): UserRole | null {
     if (typeof roleValue !== 'string') {
       return null;
     }
@@ -202,15 +193,41 @@ export class AuthService {
     return null;
   }
 
-  private debugAuth(message: string, data?: unknown): void {
-    if (localStorage.getItem(this.AUTH_DEBUG_KEY) !== '1') {
-      return;
+  private decodeJwtPayload(token: string): any {
+    const payloadPart = token.split('.')[1];
+    if (!payloadPart) {
+      return null;
     }
 
-    if (data === undefined) {
-      console.log(`[AuthDebug] ${message}`);
-      return;
+    // Support both base64url and base64 payload formats.
+    const normalized = payloadPart.replace(/-/g, '+').replace(/_/g, '/');
+    const padding = '='.repeat((4 - (normalized.length % 4)) % 4);
+    return JSON.parse(atob(normalized + padding));
+  }
+
+  private getStoredUser(): AuthUser | null {
+    const raw = localStorage.getItem(this.USER_KEY);
+    if (!raw) {
+      return null;
     }
-    console.log(`[AuthDebug] ${message}`, data);
+
+    try {
+      const parsed = JSON.parse(raw) as AuthUser;
+      if (!parsed || typeof parsed !== 'object') {
+        return null;
+      }
+      return this.normalizeUser(parsed);
+    } catch {
+      return null;
+    }
+  }
+
+  private clearStoredUser(): void {
+    localStorage.removeItem(this.USER_KEY);
+  }
+
+  private normalizeUser(user: AuthUser): AuthUser {
+    const normalizedRole = this.normalizeRole(user.role) ?? user.role;
+    return { ...user, role: normalizedRole };
   }
 }

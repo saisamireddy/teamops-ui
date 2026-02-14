@@ -102,9 +102,26 @@
     </div>
   }
 
-  @if (isAdmin) {
+  @if (isAdmin()) {
     <div class="admin-section">
       <h4 class="admin-title">ADMINISTRATION</h4>
+      <a
+        class="admin-link"
+        routerLink="/admin/users"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        title="Manage users"
+      >
+        <span class="admin-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="8.5" cy="7" r="4"></circle>
+            <path d="M20 8v6"></path>
+            <path d="M23 11h-6"></path>
+          </svg>
+        </span>
+        <span>Users</span>
+      </a>
       <a
         class="admin-link"
         routerLink="/admin/audit-logs"

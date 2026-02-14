@@ -1,0 +1,83 @@
+<div class="modal-overlay" (click)="onClose()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>{{ mode === 'invite' ? 'Invite User' : 'Edit Role' }}</h3>
+      <button type="button" class="btn-close" (click)="onClose()" [disabled]="loading" aria-label="Close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <p class="modal-description">
+      {{
+        mode === 'invite'
+          ? 'Add a new team member and assign an access role.'
+          : 'Update user role permissions.'
+      }}
+    </p>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      @if (mode === 'invite') {
+        <div class="name-grid">
+          <div class="form-group">
+            <label for="first_name">First Name</label>
+            <input id="first_name" type="text" formControlName="first_name" [disabled]="loading" />
+            @if (showError('first_name', 'required')) {
+              <p class="field-error">First name is required.</p>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="last_name">Last Name</label>
+            <input id="last_name" type="text" formControlName="last_name" [disabled]="loading" />
+            @if (showError('last_name', 'required')) {
+              <p class="field-error">Last name is required.</p>
+            }
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input id="email" type="email" formControlName="email" [disabled]="loading" />
+          @if (showError('email', 'required')) {
+            <p class="field-error">Email is required.</p>
+          } @else if (showError('email', 'email')) {
+            <p class="field-error">Enter a valid email address.</p>
+          }
+        </div>
+      } @else if (user) {
+        <div class="user-preview">
+          <span class="preview-name">{{ user.first_name }} {{ user.last_name }}</span>
+          <span class="preview-email">{{ user.email }}</span>
+        </div>
+      }
+
+      <div class="form-group">
+        <label for="role">Role</label>
+        <select id="role" formControlName="role" [disabled]="loading">
+          <option value="ADMIN">Admin</option>
+          <option value="PM">Manager</option>
+          <option value="DEV">Dev</option>
+        </select>
+      </div>
+
+      @if (errorMessage) {
+        <div class="error">{{ errorMessage }}</div>
+      }
+
+      <div class="modal-actions">
+        <button type="submit" [disabled]="loading" class="btn-primary">
+          @if (loading) {
+            <span class="spinner"></span>
+            Saving...
+          } @else {
+            {{ mode === 'invite' ? 'Send Invite' : 'Save Role' }}
+          }
+        </button>
+        <button type="button" (click)="onClose()" [disabled]="loading" class="btn-secondary">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>

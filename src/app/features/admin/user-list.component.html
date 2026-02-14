@@ -1,0 +1,250 @@
+<div class="tasks-container users-container" (click)="closeActionMenu()">
+  <div class="tasks-header">
+    <div class="header-left">
+      <h1 class="page-title">Team Members</h1>
+      <p class="page-subtitle">Manage access, roles, and account status</p>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-primary" (click)="openInviteModal(); $event.stopPropagation()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        Invite User
+      </button>
+    </div>
+  </div>
+
+  <div class="filters-bar">
+    <div class="filter-group">
+      <label for="search-user">Search</label>
+      <input
+        id="search-user"
+        type="text"
+        class="filter-input"
+        placeholder="Search by name or email"
+        [value]="searchTerm()"
+        (input)="onSearchInput($event)"
+      />
+    </div>
+
+    <div class="filter-group role-filter">
+      <label for="role-filter">Role</label>
+      <select
+        id="role-filter"
+        class="filter-select"
+        [value]="roleFilter()"
+        (change)="onRoleFilterChange($event)"
+      >
+        <option value="">All Roles</option>
+        <option value="ADMIN">Admin</option>
+        <option value="PM">Manager</option>
+        <option value="DEV">Dev</option>
+      </select>
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="error-alert">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+
+  <section class="content-panel">
+    <div class="table-region">
+      @if (loading()) {
+        <div class="loading-state">
+          <span class="spinner" aria-hidden="true"></span>
+          <span>Loading team members...</span>
+        </div>
+      } @else if (filteredUsers.length === 0) {
+        <div class="empty-state">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="9" cy="8" r="4"></circle>
+            <path d="M17 11a4 4 0 1 0 0-8"></path>
+            <path d="M2 20a7 7 0 0 1 14 0"></path>
+            <path d="M17 20a5 5 0 0 0-3-4.58"></path>
+          </svg>
+          <h3>No team members found</h3>
+          <p>Try adjusting your search or role filter.</p>
+        </div>
+      } @else {
+        <div class="table-wrap users-table-wrap">
+          <table class="audit-table users-table">
+            <thead>
+              <tr>
+                <th>Member</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Joined</th>
+                <th class="actions-column">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (user of filteredUsers; track user.id) {
+                <tr>
+                  <td>
+                    <div class="member-cell">
+                      @if (user.avatar) {
+                        <img
+                          [src]="user.avatar"
+                          [alt]="user.first_name + ' ' + user.last_name"
+                          class="member-avatar"
+                        />
+                      } @else {
+                        <div class="member-avatar member-avatar-fallback">
+                          {{ (user.first_name.charAt(0) || 'U') + (user.last_name.charAt(0) || '') }}
+                        </div>
+                      }
+                      <div>
+                        <div class="member-name">
+                          {{ (user.first_name || user.last_name) ? (user.first_name + ' ' + user.last_name).trim() : user.username }}
+                        </div>
+                        <div class="member-email">{{ user.email }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="role-chip" [class]="getRoleBadgeClass(user.role)">
+                      {{ user.role === 'PM' ? 'Manager' : user.role === 'DEV' ? 'Dev' : 'Admin' }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="status-chip" [class.status-inactive]="!user.is_active">
+                      <span class="status-dot"></span>
+                      {{ user.is_active ? 'Active' : 'Suspended' }}
+                    </span>
+                  </td>
+                  <td class="joined-cell">{{ user.date_joined | date:'MMM d, y' }}</td>
+                  <td class="actions-column">
+                    <div class="action-menu-wrapper">
+                      <button
+                        class="btn-icon menu-toggle"
+                        (click)="toggleActionMenu(user.id); $event.stopPropagation()"
+                        title="Open actions"
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <circle cx="12" cy="12" r="1"></circle>
+                          <circle cx="19" cy="12" r="1"></circle>
+                          <circle cx="5" cy="12" r="1"></circle>
+                        </svg>
+                      </button>
+
+                      @if (actionMenuUserId() === user.id) {
+                        <div class="action-menu" (click)="$event.stopPropagation()">
+                          <button type="button" (click)="openEditRoleModal(user)">Edit Role</button>
+                          <button type="button" (click)="resetPassword(user)">Reset Password</button>
+                          <button
+                            type="button"
+                            [class.danger-action]="user.is_active"
+                            [class.success-action]="!user.is_active"
+                            (click)="toggleStatus(user)"
+                          >
+                            {{ user.is_active ? 'Suspend User' : 'Activate User' }}
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </section>
+
+  @if (showInviteModal()) {
+    <app-user-form-modal
+      mode="invite"
+      [loading]="modalLoading()"
+      [errorMessage]="modalErrorMessage()"
+      (close)="closeModals()"
+      (submitted)="submitInvite($event)"
+    />
+  }
+
+  @if (showEditRoleModal()) {
+    <app-user-form-modal
+      mode="edit-role"
+      [user]="selectedUser()"
+      [loading]="modalLoading()"
+      [errorMessage]="modalErrorMessage()"
+      (close)="closeModals()"
+      (submitted)="submitEditRole($event)"
+    />
+  }
+
+  @if (showResetPasswordModal()) {
+    @if (selectedUser(); as user) {
+      <div class="modal-overlay" (click)="!modalLoading() && closeModals()">
+        <div class="modal reset-password-modal" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>Reset Password</h3>
+            <button
+              type="button"
+              class="btn-close"
+              (click)="closeModals()"
+              [disabled]="modalLoading()"
+              aria-label="Close"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+
+          <p class="modal-description">
+            Set a temporary password for {{ user.first_name }} {{ user.last_name }} ({{ user.email }}).
+          </p>
+
+          <form (ngSubmit)="submitResetPassword()">
+            <div class="form-group">
+              <label for="temporary_password">Temporary Password</label>
+              <input
+                id="temporary_password"
+                type="text"
+                [value]="resetPasswordValue()"
+                (input)="onResetPasswordInput($event)"
+                [disabled]="modalLoading()"
+                autocomplete="off"
+                placeholder="Enter temporary password"
+              />
+            </div>
+
+            @if (modalErrorMessage()) {
+              <div class="error">{{ modalErrorMessage() }}</div>
+            }
+
+            <div class="modal-actions">
+              <button type="submit" [disabled]="modalLoading()" class="btn-primary">
+                @if (modalLoading()) {
+                  <span class="spinner"></span>
+                  Resetting...
+                } @else {
+                  Reset Password
+                }
+              </button>
+              <button type="button" (click)="closeModals()" [disabled]="modalLoading()" class="btn-secondary">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    }
+  }
+
+  @if (toastMessage()) {
+    <div class="toast success" role="status" aria-live="polite">
+      {{ toastMessage() }}
+    </div>
+  }
+</div>
