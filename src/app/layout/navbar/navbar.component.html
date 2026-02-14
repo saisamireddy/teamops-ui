@@ -101,6 +101,27 @@
       <span class="no-projects-badge">No projects assigned</span>
     </div>
   }
+
+  @if (isAdmin) {
+    <div class="admin-section">
+      <h4 class="admin-title">ADMINISTRATION</h4>
+      <a
+        class="admin-link"
+        routerLink="/admin/audit-logs"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        title="View audit logs"
+      >
+        <span class="admin-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 3l7 4v5c0 5-3.4 8.7-7 9.8-3.6-1.1-7-4.8-7-9.8V7l7-4z"></path>
+            <path d="M9 12l2 2 4-4"></path>
+          </svg>
+        </span>
+        <span>Audit Logs</span>
+      </a>
+    </div>
+  }
 </nav>
 
 <!-- Create Project Modal -->

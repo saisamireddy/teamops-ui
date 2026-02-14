@@ -101,6 +101,46 @@
   background: rgba(15,23,42,0.04);
 }
 
+.menu-group {
+  padding: 2px 8px;
+}
+
+.admin-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.chev-small {
+  color: #6b7280;
+  transition: transform 0.2s;
+}
+
+.admin-toggle[aria-expanded='true'] .chev-small {
+  transform: rotate(180deg);
+}
+
+.submenu-list {
+  list-style: none;
+  margin: 4px 0 2px 0;
+  padding: 0 0 0 8px;
+  border-left: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.submenu-list li {
+  padding: 3px 0 3px 6px;
+}
+
+.submenu-link {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.submenu-link:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 /* Small screens adjustments */
 @media (max-width: 640px) {
   .app-header {
