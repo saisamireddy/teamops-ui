@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router, NavigationEnd } from '@angular/router';
+import { Router, NavigationEnd, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { ProjectService, Project } from '../../core/services/project.service';
@@ -8,10 +8,11 @@ import { FormsModule } from '@angular/forms';
 import { CreateProjectComponent } from '../../features/projects/create-project/create-project.component';
 import { EditProjectComponent } from '../../features/projects/edit-project/edit-project.component';
 import { ChangeDetectorRef } from '@angular/core';
+import { AuthService } from '../../core/services/auth.service';
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, FormsModule, CreateProjectComponent, EditProjectComponent],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, CreateProjectComponent, EditProjectComponent],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.css',
 })
@@ -25,6 +26,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   showArchivedProjects = false;
   archivedProjects: Project[] = [];
   loadingArchived = false;
+  isAdmin = false;
 
   private navSub!: Subscription;
   private projectsSub!: Subscription;
@@ -32,10 +34,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private projects: ProjectService,
+    private auth: AuthService,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
+    this.isAdmin = this.auth.isAdmin();
     this.projects$ = this.projects.getProjects();
     this.projectsSub = this.projects$.subscribe((projects) => {
       const activeCount = (projects || []).filter(p => !p.is_archived).length;
@@ -113,7 +117,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     this.router.navigate(['/projects', projectId, 'tasks']);
   }
-
 
   ngOnDestroy() {
     this.navSub?.unsubscribe();

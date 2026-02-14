@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { AuthGuard } from './core/guards/auth.guard';
+import { AdminGuard } from './core/guards/admin.guard';
 import { LandingGuard } from './core/guards/landing.guard';
 import { RedirectPlaceholderComponent } from './core/components/redirect-placeholder.component';
 import { LoginComponent } from './features/auth/login.component';
@@ -54,6 +55,12 @@ export const routes: Routes = [
         path: 'profile',
         component: ProfileComponent,
         canActivate: [AuthGuard],
+      },
+      {
+        path: 'admin',
+        canActivate: [AdminGuard],
+        loadChildren: () =>
+          import('./features/admin/admin.routes').then((m) => m.ADMIN_ROUTES),
       },
     ],
   },

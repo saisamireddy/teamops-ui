@@ -1,0 +1,131 @@
+<section class="audit-page">
+  @if (!isAdmin()) {
+    <div class="forbidden-card">
+      <h2>Forbidden</h2>
+      <p>You do not have access to view audit logs.</p>
+    </div>
+  } @else {
+    <header class="page-header">
+      <h1>System Audit Logs</h1>
+      <p>Track security and data changes</p>
+    </header>
+
+    <form class="toolbar" [formGroup]="filterForm">
+      <div class="toolbar-group date-range">
+        <div class="field">
+          <label for="startDate">Start Date</label>
+          <input id="startDate" type="date" formControlName="startDate" />
+        </div>
+        <div class="field">
+          <label for="endDate">End Date</label>
+          <input id="endDate" type="date" formControlName="endDate" />
+        </div>
+      </div>
+
+      <div class="toolbar-group">
+        <div class="field">
+          <label for="action">Action</label>
+          <select id="action" formControlName="action">
+            @for (option of actionOptions; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="toolbar-group actor-group">
+        <div class="field">
+          <label for="actor">Actor</label>
+          <input id="actor" type="text" formControlName="actor" placeholder="Search by user id or name" />
+        </div>
+      </div>
+    </form>
+
+    <section class="content-panel">
+      @if (errorMessage()) {
+        <div class="message error">{{ errorMessage() }}</div>
+      }
+
+      <div class="table-region">
+        @if (loading()) {
+          <div class="loading-state">
+            <span class="spinner" aria-hidden="true"></span>
+            <span>Loading audit logs...</span>
+          </div>
+        } @else if (logs().length === 0) {
+          <div class="empty-state">No logs found for these filters.</div>
+        } @else {
+          <div class="table-wrap">
+            <table class="audit-table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Actor</th>
+                  <th>Action</th>
+                  <th>Entity</th>
+                  <th>IP Address</th>
+                  <th>Changes</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (log of logs(); track log.id) {
+                  <tr>
+                    <td>{{ log.created_at | date:'dd MMM yyyy, HH:mm' }}</td>
+                    <td>
+                      <div class="actor">{{ log.actor_name }}</div>
+                      <div class="actor-email">{{ log.actor_email || '-' }}</div>
+                    </td>
+                    <td>
+                      <span class="action-chip" [class]="getActionClass(log.action)">{{ log.action }}</span>
+                    </td>
+                    <td>{{ log.entity_type }} #{{ log.object_id }}</td>
+                    <td>{{ log.ip_address || '-' }}</td>
+                    <td>
+                      <button class="btn-view" type="button" [disabled]="!hasChanges(log)" (click)="openChanges(log)">
+                        View Changes
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      <div class="pagination">
+        <button type="button" (click)="goToPage(page() - 1)" [disabled]="page() === 1">Previous</button>
+        <span>Page {{ page() }} of {{ pageCount() }} ({{ totalCount() }} total)</span>
+        <button type="button" (click)="goToPage(page() + 1)" [disabled]="page() >= pageCount()">Next</button>
+      </div>
+    </section>
+  }
+</section>
+
+@if (selectedLog()) {
+  <div class="modal-backdrop" (click)="closeChanges()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Changes for Log #{{ selectedLog()?.id }}</h3>
+        <button type="button" class="btn-close" (click)="closeChanges()">Close</button>
+      </div>
+
+      @if (selectedChangeEntries().length === 0) {
+        <p class="empty-state">No detailed changes found.</p>
+      } @else {
+        <ul class="changes-list">
+          @for (change of selectedChangeEntries(); track change.field) {
+            <li>
+              <div class="field-name">{{ change.field }}</div>
+              <div class="diff-row">
+                <span class="old">Old: {{ change.oldValue }}</span>
+                <span class="arrow">-></span>
+                <span class="new">New: {{ change.newValue }}</span>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  </div>
+}

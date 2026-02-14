@@ -294,6 +294,55 @@
   background: var(--gray-50);
 }
 
+.admin-section {
+  margin-top: auto;
+  padding: 12px;
+  border-top: 1px solid var(--gray-200);
+  background: #fff;
+}
+
+.admin-title {
+  margin: 0 0 8px;
+  padding: 0 8px;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--gray-500);
+}
+
+.admin-link {
+  width: 100%;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--gray-700);
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.admin-link:hover {
+  background: var(--gray-50);
+  border-color: var(--gray-300);
+}
+
+.admin-link.active {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: var(--primary);
+  color: var(--primary-dark);
+}
+
+.admin-icon {
+  display: inline-flex;
+  align-items: center;
+}
+
 .no-projects-badge-wrap {
   padding: 16px 12px;
 }
@@ -402,6 +451,19 @@
 
   .sidebar-footer {
     display: none;
+  }
+
+  .admin-title {
+    display: none;
+  }
+
+  .admin-link span:last-child {
+    display: none;
+  }
+
+  .admin-link {
+    justify-content: center;
+    padding: 8px;
   }
 }
 

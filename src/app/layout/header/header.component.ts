@@ -13,24 +13,36 @@ import { Subscription } from 'rxjs';
 export class HeaderComponent implements OnDestroy {
   isLoggedIn = false;
   showMenu = false;
-  private sub: Subscription;
+  private sub = new Subscription();
   private readonly host = inject(ElementRef<HTMLElement>);
 
   constructor(
     private auth: AuthService,
     private router: Router
   ) {
-    this.sub = this.auth.authState().subscribe(
-      state => (this.isLoggedIn = state)
-    );
+    this.isLoggedIn = this.auth.isAuthenticated();
+
+    this.sub.add(this.auth.authState().subscribe((state) => {
+      this.isLoggedIn = state;
+
+      if (!state) {
+        this.showMenu = false;
+      }
+    }));
   }
 
   logout() {
+    this.showMenu = false;
     this.auth.logout();
     this.router.navigate(['/login']);
   }
 
   toggleMenu(): void {
+    if (localStorage.getItem('debug_auth') === '1') {
+      console.log('[AuthDebug] Header toggleMenu state', {
+        isLoggedIn: this.isLoggedIn,
+      });
+    }
     this.showMenu = !this.showMenu;
   }
 
