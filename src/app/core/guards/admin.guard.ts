@@ -10,7 +10,7 @@ export class AdminGuard implements CanActivate {
   ) {}
 
   canActivate(): boolean | UrlTree {
-    if (this.auth.isAdmin()) {
+    if (this.auth.currentUser()?.role === 'ADMIN') {
       return true;
     }
 

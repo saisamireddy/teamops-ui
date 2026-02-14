@@ -517,7 +517,7 @@ input[type='password']:focus ~ .input-icon {
 }
 
 /* Dark Mode Support (optional) */
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: light) {
   .login-wrapper {
     background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   }

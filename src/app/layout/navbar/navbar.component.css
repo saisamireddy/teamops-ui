@@ -311,7 +311,7 @@
 }
 
 .admin-link {
-  width: 100%;
+  width: calc(100% - 24px);
   border: 1px solid var(--gray-200);
   border-radius: var(--radius-sm);
   background: #fff;
@@ -336,6 +336,10 @@
   background: rgba(59, 130, 246, 0.12);
   border-color: var(--primary);
   color: var(--primary-dark);
+}
+
+.admin-link + .admin-link {
+  margin-top: 8px;
 }
 
 .admin-icon {

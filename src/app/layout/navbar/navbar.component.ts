@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, computed } from '@angular/core';
 import { Router, NavigationEnd, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
@@ -26,7 +26,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   showArchivedProjects = false;
   archivedProjects: Project[] = [];
   loadingArchived = false;
-  isAdmin = false;
+  readonly isAdmin = computed(() => this.auth.currentUser()?.role === 'ADMIN');
 
   private navSub!: Subscription;
   private projectsSub!: Subscription;
@@ -39,7 +39,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    this.isAdmin = this.auth.isAdmin();
     this.projects$ = this.projects.getProjects();
     this.projectsSub = this.projects$.subscribe((projects) => {
       const activeCount = (projects || []).filter(p => !p.is_archived).length;
