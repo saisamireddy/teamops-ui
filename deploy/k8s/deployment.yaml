@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: teamops-ui
+  namespace: teamops
+  labels:
+    app: teamops-ui
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: teamops-ui
+  template:
+    metadata:
+      labels:
+        app: teamops-ui
+    spec:
+      containers:
+        - name: teamops-ui
+          image: teamops-ui:latest
+          imagePullPolicy:  Never
+          ports:
+            - containerPort: 80
+          env:
+            - name: BACKEND_UPSTREAM
+              value: "http://backend-service.teamops.svc.cluster.local:8000"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"

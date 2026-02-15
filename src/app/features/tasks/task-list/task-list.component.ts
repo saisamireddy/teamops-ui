@@ -14,6 +14,7 @@ import { CreateTaskComponent } from '../create-task/create-task.component';
 import { ProjectService } from '../../../core/services/project.service';
 import { ProjectMember } from '../../../core/models/member.model';
 import { EditTaskComponent } from '../edit-task/edit-task.component';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-task-list',
@@ -58,7 +59,8 @@ export class TaskListComponent implements OnInit, OnDestroy {
     private projectContext: ProjectContextService,
     private taskService: TaskService,
     private projectService: ProjectService, 
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private toast: ToastService
   ) {}
 
   ngOnInit() {
@@ -102,8 +104,9 @@ private loadTasks(projectId: number) {
       this.cdr.markForCheck();
     },
 
-    error: err => {
+    error: () => {
       this.showError('Failed to load tasks');
+      this.toast.error('Failed to load tasks.');
       this.isLoadingTasks = false;
       this.cdr.markForCheck();
     }
@@ -114,8 +117,14 @@ private loadTasks(projectId: number) {
 private loadMembers(projectId: number) {
   
   this.projectService.getProjectMembers(projectId)
-    .subscribe(members => {
-      this.projectMembers = members;
+    .subscribe({
+      next: (members) => {
+        this.projectMembers = members;
+      },
+      error: () => {
+        this.projectMembers = [];
+        this.toast.error('Failed to load project members.');
+      },
     });
 }
 openCreateModal() {
@@ -305,9 +314,11 @@ deleteTask(taskId: number) {
   this.taskService.deleteTask(taskId).subscribe({
     next: () => {
       this.isDeletingTask = null;
+      this.toast.success('Task moved to trash.');
     },
     error: () => {
       this.showError('Delete failed');
+      this.toast.error('Failed to delete task.');
       this.isDeletingTask = null;
       this.tasks = backup;
       this.applyFilters();
@@ -324,11 +335,13 @@ restoreTask(taskId: number) {
   this.taskService.restoreTask(taskId).subscribe( {
     next: () => {
       this.isRestoringTask = null;
+      this.toast.success('Task restored.');
     },
-    error: (err) => {
+    error: () => {
       this.trashTasks = backup; 
       this.isRestoringTask = null;
       this.showError('Failed to restore task'); 
+      this.toast.error('Failed to restore task.');
       this.cdr.markForCheck(); 
       
     }

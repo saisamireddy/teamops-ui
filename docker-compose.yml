@@ -1,0 +1,12 @@
+services:
+  teamops-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: teamops-ui:latest
+    ports:
+      - "8080:80"
+    environment:
+      # Change this to your backend service URL reachable from this container.
+      - BACKEND_UPSTREAM=http://host.docker.internal:8000
+    restart: unless-stopped

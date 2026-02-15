@@ -2,11 +2,12 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { Subject, Subscription } from 'rxjs';
 import { AuthService } from './auth.service';
 import { ProjectContextService } from './project-context.service';
+import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class TaskSocketService implements OnDestroy {
   private socket: WebSocket | null = null;
-  private events$ = new Subject<any>();
+  private events$ = new Subject<unknown>();
 
   private reconnectAttempts = 0;
   private readonly MAX_RETRIES = 5;
@@ -44,7 +45,7 @@ export class TaskSocketService implements OnDestroy {
 
     this.manuallyClosed = false;
 
-    const url = `ws://127.0.0.1:8000/ws/projects/${projectId}/?token=${token}`;
+    const url = this.buildSocketUrl(projectId, token);
     this.socket = new WebSocket(url);
 
     this.socket.onopen = () => {
@@ -71,7 +72,6 @@ export class TaskSocketService implements OnDestroy {
     };
 
     this.socket.onerror = () => {
-      console.warn('[WS ERROR]');
       this.events$.next({ type: 'WS_ERROR' });
       this.socket?.close();
     };
@@ -96,6 +96,20 @@ export class TaskSocketService implements OnDestroy {
 
   get events() {
     return this.events$.asObservable();
+  }
+
+  private buildSocketUrl(projectId: number, token: string): string {
+    const configuredBase = environment.apiBaseUrl?.trim();
+    const base = configuredBase || window.location.origin;
+
+    try {
+      const apiUrl = new URL(base, window.location.origin);
+      const wsProtocol = apiUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+      return `${wsProtocol}//${apiUrl.host}/ws/projects/${projectId}/?token=${encodeURIComponent(token)}`;
+    } catch {
+      const fallbackProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      return `${fallbackProtocol}//${window.location.host}/ws/projects/${projectId}/?token=${encodeURIComponent(token)}`;
+    }
   }
 
   ngOnDestroy() {

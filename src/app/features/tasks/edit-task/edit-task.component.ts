@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { TaskService } from '../../../core/services/task.service';
 import { Task } from '../../../core/models/task.model';
 import { OnChanges, SimpleChanges } from '@angular/core';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-edit-task',
@@ -37,7 +38,10 @@ export class EditTaskComponent implements OnChanges{
 
   }
 
-  constructor(private taskService: TaskService) {}
+  constructor(
+    private taskService: TaskService,
+    private toast: ToastService
+  ) {}
 
   submit() {
     if (!this.task?.id) return;
@@ -48,10 +52,13 @@ export class EditTaskComponent implements OnChanges{
     this.taskService.updateTask(this.task.id, this.form)
       .subscribe({
         next: () => {
+          this.toast.success('Task updated successfully.');
           this.close.emit(); // WS will refresh UI
         },
         error: err => {
-          this.error = err?.error?.detail || 'Update failed';
+          const message = this.extractApiError(err, 'Update failed');
+          this.error = message;
+          this.toast.error(message);
           this.loading = false;
         }
       });
@@ -59,5 +66,23 @@ export class EditTaskComponent implements OnChanges{
 
   cancel() {
     this.close.emit();
+  }
+
+  private extractApiError(error: unknown, fallback: string): string {
+    const typedError = error as {
+      error?: { detail?: string; [key: string]: unknown } | string;
+    };
+    const errorPayload = typedError?.error;
+    if (typeof errorPayload === 'string') return errorPayload;
+    if (typeof errorPayload?.detail === 'string') return errorPayload.detail;
+
+    if (errorPayload && typeof errorPayload === 'object') {
+      const firstMessage = Object.values(errorPayload)
+        .map((value) => (Array.isArray(value) ? value.join(', ') : String(value)))
+        .find((value) => value.length > 0);
+      if (firstMessage) return firstMessage;
+    }
+
+    return fallback;
   }
 }
