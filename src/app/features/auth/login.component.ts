@@ -35,6 +35,8 @@ export class LoginComponent {
 
     if (this.route.snapshot.queryParamMap.get('registered') === '1') {
       this.success.set('Registration successful. Please sign in.');
+    } else if (this.route.snapshot.queryParamMap.get('invited') === '1') {
+      this.success.set('Invitation accepted. Please sign in with your new password.');
     }
   }
 
