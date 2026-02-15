@@ -60,6 +60,7 @@ export class UserListComponent implements OnDestroy {
       const searchPass =
         !search ||
         `${user.first_name} ${user.last_name}`.toLowerCase().includes(search) ||
+        user.username.toLowerCase().includes(search) ||
         user.email.toLowerCase().includes(search);
       return rolePass && searchPass;
     });
