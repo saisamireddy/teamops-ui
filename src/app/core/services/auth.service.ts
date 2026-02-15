@@ -22,6 +22,20 @@ export interface LoginResponse {
   user: AuthUser;
 };
 
+export interface InvitePreview {
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: UserRole | string;
+  invite_expires_at: string;
+}
+
+export interface AcceptInvitePayload {
+  token: string;
+  password: string;
+  confirm_password: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly TOKEN_KEY = 'access_token';
@@ -82,6 +96,20 @@ export class AuthService {
         this.role$.next(this.getRoleFromUser(normalizedUser));
         this.authenticated$.next(true);
       })
+    );
+  }
+
+  getInvitePreview(token: string): Observable<InvitePreview> {
+    return this.http.get<InvitePreview>(
+      `${environment.apiBaseUrl}/api/auth/invites/accept/`,
+      { params: { token } }
+    );
+  }
+
+  acceptInvite(payload: AcceptInvitePayload): Observable<{ detail: string }> {
+    return this.http.post<{ detail: string }>(
+      `${environment.apiBaseUrl}/api/auth/invites/accept/`,
+      payload
     );
   }
 

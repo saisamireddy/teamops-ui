@@ -1,0 +1,67 @@
+<div class="invite-wrapper">
+  <div class="invite-card">
+    <h1>Accept Team Invite</h1>
+
+    @if (loading()) {
+      <p class="muted">Validating invitation...</p>
+    } @else if (error() && !invite()) {
+      <div class="alert error">{{ error() }}</div>
+      <a routerLink="/login" class="link-btn">Go to Login</a>
+    } @else if (invite(); as details) {
+      <p class="muted">
+        You are invited as <strong>{{ details.role }}</strong> for
+        <strong>{{ details.email }}</strong>.
+      </p>
+      <p class="muted">
+        This link expires on {{ details.invite_expires_at | date:'medium' }}.
+      </p>
+
+      <form [formGroup]="form" (ngSubmit)="acceptInvite()">
+        <div class="form-group">
+          <label for="password">New Password</label>
+          <input id="password" type="password" formControlName="password" [disabled]="submitting()" />
+          @if (form.get('password')?.invalid && form.get('password')?.touched) {
+            <span class="error-text">
+              @if (form.get('password')?.hasError('required')) {
+                Password is required
+              } @else if (form.get('password')?.hasError('minlength')) {
+                Password must be at least 8 characters
+              }
+            </span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="confirm_password">Confirm Password</label>
+          <input
+            id="confirm_password"
+            type="password"
+            formControlName="confirm_password"
+            [disabled]="submitting()"
+          />
+          @if (form.get('confirm_password')?.invalid && form.get('confirm_password')?.touched) {
+            <span class="error-text">Confirm password is required</span>
+          }
+          @if (form.hasError('passwordMismatch') && form.get('confirm_password')?.touched) {
+            <span class="error-text">Passwords do not match</span>
+          }
+        </div>
+
+        @if (error()) {
+          <div class="alert error">{{ error() }}</div>
+        }
+        @if (success()) {
+          <div class="alert success">{{ success() }}</div>
+        }
+
+        <button type="submit" class="btn-primary" [disabled]="submitting() || form.invalid">
+          @if (submitting()) {
+            Accepting...
+          } @else {
+            Set Password & Continue
+          }
+        </button>
+      </form>
+    }
+  </div>
+</div>

@@ -16,6 +16,9 @@ export interface ManagedUser {
   is_active: boolean;
   avatar: string | null;
   date_joined: string;
+  invited_by?: number | null;
+  invited_at?: string | null;
+  invite_pending?: boolean;
 }
 
 type ManagedUsersResponse =

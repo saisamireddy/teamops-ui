@@ -5,6 +5,7 @@ import { LandingGuard } from './core/guards/landing.guard';
 import { RedirectPlaceholderComponent } from './core/components/redirect-placeholder.component';
 import { LoginComponent } from './features/auth/login.component';
 import { RegisterComponent } from './features/auth/register/register.component';
+import { AcceptInviteComponent } from './features/auth/accept-invite.component';
 import { TaskListComponent } from './features/tasks/task-list/task-list.component';
 import { CreateProjectComponent } from './features/projects/create-project/create-project.component';
 import { EditProjectComponent } from './features/projects/edit-project/edit-project.component';
@@ -22,6 +23,10 @@ export const routes: Routes = [
     path: 'register',
     component: RegisterComponent,
     canActivate: [AuthGuard],
+  },
+  {
+    path: 'accept-invite',
+    component: AcceptInviteComponent,
   },
   {
     path: '',
