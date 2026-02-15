@@ -9,6 +9,7 @@ import { CreateProjectComponent } from '../../features/projects/create-project/c
 import { EditProjectComponent } from '../../features/projects/edit-project/edit-project.component';
 import { ChangeDetectorRef } from '@angular/core';
 import { AuthService } from '../../core/services/auth.service';
+import { ToastService } from '../../core/services/toast.service';
 @Component({
   selector: 'app-navbar',
   standalone: true,
@@ -35,7 +36,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private router: Router,
     private projects: ProjectService,
     private auth: AuthService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private toast: ToastService
   ) {}
 
   ngOnInit() {
@@ -68,7 +70,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.showCreateProjectModal = false;
 
     // Refresh project list after creation
-    this.projects.loadProjects().subscribe();
+    this.projects.loadProjects().subscribe({
+      error: () => this.toast.error('Failed to refresh projects list.'),
+    });
   }
 
   openEditProjectModal(project: Project) {
@@ -81,7 +85,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.selectedProjectForEdit = null;
 
     // Refresh project list after edit
-    this.projects.loadProjects().subscribe();
+    this.projects.loadProjects().subscribe({
+      error: () => this.toast.error('Failed to refresh projects list.'),
+    });
   }
 
   toggleArchivedProjects() {
@@ -96,6 +102,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         },
         error: () => {
           this.loadingArchived = false;
+          this.toast.error('Failed to load archived projects.');
           this.cdr.markForCheck();
         }
       });

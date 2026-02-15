@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ProjectService, Project } from '../../../core/services/project.service';
 import { ProjectMember } from '../../../core/models/member.model';
 import { ChangeDetectorRef } from '@angular/core';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-edit-project',
@@ -28,6 +29,7 @@ export class EditProjectComponent implements OnInit, OnChanges {
 
   constructor(private projectService: ProjectService,
     private cdr: ChangeDetectorRef,
+    private toast: ToastService
   ) {}
 
   ngOnInit() {
@@ -71,8 +73,6 @@ export class EditProjectComponent implements OnInit, OnChanges {
           .map(n => Number(n))
           .filter(n => !Number.isNaN(n));
         this.selectedMembers = [...extracted];
-       
-        setTimeout(() => console.log('EditProject: post-tick selectedMembers', this.selectedMembers.slice()), 0);
         this.cdr.markForCheck();
       },
       error: () => {
@@ -85,7 +85,6 @@ export class EditProjectComponent implements OnInit, OnChanges {
               this.availableMembers = members;
               if ((!this.availableMembers || this.availableMembers.length === 0) && this.project?.members) {
                 this.availableMembers = this.project.members as ProjectMember[];
-                console.warn('EditProject: fallback populated from project.members', this.availableMembers);
               }
               const rawFb = (this.project.members || []);
              
@@ -103,7 +102,6 @@ export class EditProjectComponent implements OnInit, OnChanges {
             },
             error: () => {
               this.availableMembers = this.project?.members ? (this.project.members as ProjectMember[]) : [];
-              if (this.availableMembers.length > 0) console.warn('EditProject: final fallback using project.members', this.availableMembers);
               const rawFinal = (this.project.members || []);
               const extractedFinal = rawFinal
                 .map(m => {
@@ -115,6 +113,7 @@ export class EditProjectComponent implements OnInit, OnChanges {
                 .map(n => Number(n))
                 .filter(n => !Number.isNaN(n));
               this.selectedMembers = [...extractedFinal];
+              this.toast.info('Could not load full member list. Showing available project members.');
             }
           });
         }
@@ -124,7 +123,9 @@ export class EditProjectComponent implements OnInit, OnChanges {
 
   submit() {
     if (!this.name.trim()) {
-      this.error = 'Project name required';
+      const message = 'Project name required';
+      this.error = message;
+      this.toast.error(message);
       return;
     }
 
@@ -138,10 +139,13 @@ export class EditProjectComponent implements OnInit, OnChanges {
       members: validMembers.length > 0 ? validMembers : undefined
     }).subscribe({
       next: () => {
+        this.toast.success('Project updated successfully.');
         this.close.emit();
       },
-      error: () => {
-        this.error = 'Failed to update project';
+      error: (error: unknown) => {
+        const message = this.extractApiError(error, 'Failed to update project');
+        this.error = message;
+        this.toast.error(message);
         this.loading = false;
       }
     });
@@ -157,10 +161,13 @@ export class EditProjectComponent implements OnInit, OnChanges {
 
     this.projectService.archiveProject(this.project.id).subscribe({
       next: () => {
+        this.toast.success('Project archived.');
         this.close.emit();
       },
-      error: () => {
-        this.archiveError = 'Failed to archive project';
+      error: (error: unknown) => {
+        const message = this.extractApiError(error, 'Failed to archive project');
+        this.archiveError = message;
+        this.toast.error(message);
         this.archiveLoading = false;
       }
     });
@@ -179,12 +186,14 @@ export class EditProjectComponent implements OnInit, OnChanges {
   this.projectService.unarchiveProject(this.project.id).subscribe({
     next: () => {
       this.archiveLoading = false;
+      this.toast.success('Project restored.');
       this.close.emit(); 
     
     },
-    error: (err) => {
-      console.error(err);
-      this.archiveError = 'Failed to unarchive project';
+    error: (error: unknown) => {
+      const message = this.extractApiError(error, 'Failed to unarchive project');
+      this.archiveError = message;
+      this.toast.error(message);
       this.archiveLoading = false;
     }
   });
@@ -200,10 +209,13 @@ export class EditProjectComponent implements OnInit, OnChanges {
 
     this.projectService.deleteProject(this.project.id).subscribe({
       next: () => {
+        this.toast.success('Project deleted.');
         this.close.emit();
       },
-      error: () => {
-        this.error = 'Failed to delete project';
+      error: (error: unknown) => {
+        const message = this.extractApiError(error, 'Failed to delete project');
+        this.error = message;
+        this.toast.error(message);
         this.loading = false;
       }
     });
@@ -226,5 +238,23 @@ export class EditProjectComponent implements OnInit, OnChanges {
 
   cancel() {
     this.close.emit();
+  }
+
+  private extractApiError(error: unknown, fallback: string): string {
+    const typedError = error as {
+      error?: { detail?: string; [key: string]: unknown } | string;
+    };
+    const errorPayload = typedError?.error;
+    if (typeof errorPayload === 'string') return errorPayload;
+    if (typeof errorPayload?.detail === 'string') return errorPayload.detail;
+
+    if (errorPayload && typeof errorPayload === 'object') {
+      const firstMessage = Object.values(errorPayload)
+        .map((value) => (Array.isArray(value) ? value.join(', ') : String(value)))
+        .find((value) => value.length > 0);
+      if (firstMessage) return firstMessage;
+    }
+
+    return fallback;
   }
 }

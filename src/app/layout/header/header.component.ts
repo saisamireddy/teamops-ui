@@ -38,11 +38,6 @@ export class HeaderComponent implements OnDestroy {
   }
 
   toggleMenu(): void {
-    if (localStorage.getItem('debug_auth') === '1') {
-      console.log('[AuthDebug] Header toggleMenu state', {
-        isLoggedIn: this.isLoggedIn,
-      });
-    }
     this.showMenu = !this.showMenu;
   }
 

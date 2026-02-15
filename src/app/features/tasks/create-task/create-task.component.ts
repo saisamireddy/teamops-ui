@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TaskService } from '../../../core/services/task.service';
-import { Task } from '../../../core/models/task.model';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-create-task',
@@ -29,11 +29,16 @@ export class CreateTaskComponent {
     assigned_to: null as number | null,
   };
 
-  constructor(private taskService: TaskService) {}
+  constructor(
+    private taskService: TaskService,
+    private toast: ToastService
+  ) {}
 
   submit() {
     if (!this.form.title.trim()) {
-      this.error = 'Title is required';
+      const message = 'Title is required';
+      this.error = message;
+      this.toast.error(message);
       return;
     }
 
@@ -65,10 +70,13 @@ this.taskService
   .subscribe({
     next: () => {
       // REST succeeded → WS will fan out
+      this.toast.success('Task created successfully.');
       this.close.emit();
     },
     error: (err) => {
-      this.error = err?.error?.detail || 'Failed to create task';
+      const message = this.extractApiError(err, 'Failed to create task');
+      this.error = message;
+      this.toast.error(message);
       this.loading = false;
     },
   });
@@ -76,5 +84,23 @@ this.taskService
 
   cancel() {
     this.close.emit();
+  }
+
+  private extractApiError(error: unknown, fallback: string): string {
+    const typedError = error as {
+      error?: { detail?: string; [key: string]: unknown } | string;
+    };
+    const errorPayload = typedError?.error;
+    if (typeof errorPayload === 'string') return errorPayload;
+    if (typeof errorPayload?.detail === 'string') return errorPayload.detail;
+
+    if (errorPayload && typeof errorPayload === 'object') {
+      const firstMessage = Object.values(errorPayload)
+        .map((value) => (Array.isArray(value) ? value.join(', ') : String(value)))
+        .find((value) => value.length > 0);
+      if (firstMessage) return firstMessage;
+    }
+
+    return fallback;
   }
 }

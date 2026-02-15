@@ -1,9 +1,10 @@
 import { Component, EventEmitter, Output, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ProjectService } from '../../../core/services/project.service';
-import { AuthService } from '../../../core/services/auth.service';
 import { ProjectMember } from '../../../core/models/member.model';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-create-project',
@@ -25,26 +26,28 @@ export class CreateProjectComponent implements OnInit {
 
   constructor(
     private projectService: ProjectService,
-    private auth: AuthService
+    private router: Router,
+    private toast: ToastService
   ) {}
 
   ngOnInit() {
     // Load all available members for selection
     this.projectService.getAllMembers().subscribe({
       next: (members) => {
-        console.log('CreateProject: getAllMembers response', members);
         this.availableMembers = members;
       },
       error: () => {
-        console.warn('CreateProject: getAllMembers failed');
         this.availableMembers = [];
+        this.toast.info('Could not load member list. You can still create a project.');
       }
     });
   }
 
   submit() {
     if (!this.name.trim()) {
-      this.error = 'Project name required';
+      const message = 'Project name required';
+      this.error = message;
+      this.toast.error(message);
       return;
     }
 
@@ -59,11 +62,19 @@ export class CreateProjectComponent implements OnInit {
       description: this.description || undefined,
       members: validMembers.length > 0 ? validMembers : undefined
     }).subscribe({
-      next: () => {
-        this.close.emit();
+      next: (createdProject) => {
+        this.toast.success(`Project "${createdProject.name}" created.`);
+        if (this.close.observed) {
+          this.close.emit();
+          return;
+        }
+
+        this.router.navigate(['/projects', createdProject.id, 'tasks']);
       },
-      error: () => {
-        this.error = 'Failed to create project';
+      error: (error: unknown) => {
+        const message = this.extractApiError(error, 'Failed to create project');
+        this.error = message;
+        this.toast.error(message);
         this.loading = false;
       }
     });
@@ -85,6 +96,29 @@ export class CreateProjectComponent implements OnInit {
   }
 
   cancel() {
-    this.close.emit();
+    if (this.close.observed) {
+      this.close.emit();
+      return;
+    }
+
+    this.router.navigate(['/no-projects']);
+  }
+
+  private extractApiError(error: unknown, fallback: string): string {
+    const typedError = error as {
+      error?: { detail?: string; [key: string]: unknown } | string;
+    };
+    const errorPayload = typedError?.error;
+    if (typeof errorPayload === 'string') return errorPayload;
+    if (typeof errorPayload?.detail === 'string') return errorPayload.detail;
+
+    if (errorPayload && typeof errorPayload === 'object') {
+      const firstMessage = Object.values(errorPayload)
+        .map((value) => (Array.isArray(value) ? value.join(', ') : String(value)))
+        .find((value) => value.length > 0);
+      if (firstMessage) return firstMessage;
+    }
+
+    return fallback;
   }
 }
